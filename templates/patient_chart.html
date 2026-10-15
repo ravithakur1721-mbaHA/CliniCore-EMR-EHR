@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% block title %}Patient Chart — {{ patient.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Patient Chart</h1>
+    <div class="breadcrumb">🏥 CliniCore &rsaquo; <a href="/patients">Patients</a> &rsaquo; {{ patient.name }}</div>
+  </div>
+  <div class="page-header-right">
+    {% if can('follow_ups.add') %}
+    <a href="/follow_ups/add?patient_id={{ patient.patient_id }}" class="btn btn-secondary btn-sm">📅 Schedule Follow-Up</a>
+    {% endif %}
+    {% if can('patients.edit') %}
+    <a href="/edit_patient/{{ patient.patient_id }}" class="btn btn-secondary btn-sm">✏️ Edit</a>
+    {% endif %}
+    {% if can('visits.add') %}
+    <a href="/visits/add?patient_id={{ patient.patient_id }}" class="btn btn-primary btn-sm">+ Add Visit</a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Patient demographics banner -->
+<div class="panel mb-16">
+  <div style="background:var(--navy);border-radius:6px 6px 0 0;padding:14px 18px;display:flex;align-items:center;gap:14px;">
+    <div style="width:48px;height:48px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:700;flex-shrink:0;">
+      {{ patient.name[0]|upper }}
+    </div>
+    <div>
+      <div style="color:#fff;font-size:18px;font-weight:700;">{{ patient.name }}</div>
+      <div style="color:#94a3b8;font-size:12px;margin-top:2px;">
+        Patient ID: #P{{ '%04d' % patient.patient_id }} &nbsp;·&nbsp;
+        {{ patient.age }} years &nbsp;·&nbsp;
+        {{ patient.gender }} &nbsp;·&nbsp;
+        {{ patient.contact }}
+      </div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <span class="badge badge-green">Active Chart</span>
+    </div>
+  </div>
+
+  <!-- Quick stats for this patient -->
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--gray-200);">
+    <div style="padding:12px 18px;border-right:1px solid var(--gray-100);">
+      <div style="font-size:10.5px;color:var(--gray-400);text-transform:uppercase;font-weight:600;letter-spacing:.5px;">Visits</div>
+      <div style="font-size:22px;font-weight:700;color:var(--gray-900);margin-top:2px;">{{ visits|length }}</div>
+    </div>
+    <div style="padding:12px 18px;border-right:1px solid var(--gray-100);">
+      <div style="font-size:10.5px;color:var(--gray-400);text-transform:uppercase;font-weight:600;letter-spacing:.5px;">Diagnoses</div>
+      <div style="font-size:22px;font-weight:700;color:var(--gray-900);margin-top:2px;">{{ diagnoses|length }}</div>
+    </div>
+    <div style="padding:12px 18px;border-right:1px solid var(--gray-100);">
+      <div style="font-size:10.5px;color:var(--gray-400);text-transform:uppercase;font-weight:600;letter-spacing:.5px;">Lab Results</div>
+      <div style="font-size:22px;font-weight:700;color:var(--gray-900);margin-top:2px;">{{ labs|length }}</div>
+    </div>
+    <div style="padding:12px 18px;border-right:1px solid var(--gray-100);">
+      <div style="font-size:10.5px;color:var(--gray-400);text-transform:uppercase;font-weight:600;letter-spacing:.5px;">Medications</div>
+      <div style="font-size:22px;font-weight:700;color:var(--gray-900);margin-top:2px;">{{ meds|length }}</div>
+    </div>
+    <div style="padding:12px 18px;">
+      <div style="font-size:10.5px;color:var(--gray-400);text-transform:uppercase;font-weight:600;letter-spacing:.5px;">Follow-Ups</div>
+      <div style="font-size:22px;font-weight:700;color:var(--gray-900);margin-top:2px;">{{ follow_ups|length }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- UPCOMING FOLLOW-UPS STRIP (if any) -->
+{% if follow_ups %}
+<div class="panel mb-16" style="border-left:4px solid var(--blue);">
+  <div class="panel-header">
+    <div class="panel-title"><span class="ptitle-icon">📅</span>Clinical Follow-Up Care Plan</div>
+    {% if can('follow_ups.add') %}
+    <a href="/follow_ups/add?patient_id={{ patient.patient_id }}" class="btn btn-secondary btn-xs">+ Schedule Next</a>
+    {% endif %}
+  </div>
+  <div class="panel-body-flush">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Scheduled Date</th>
+          <th>Type / Focus</th>
+          <th>Priority</th>
+          <th>Physician</th>
+          <th>Instructions &amp; Care Goals</th>
+          <th>Status</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fu in follow_ups %}
+        <tr>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;color:{{ '#b91c1c' if fu.status == 'Overdue' else '#1e293b' }};">
+            {{ fu.scheduled_date }}
+          </td>
+          <td style="font-weight:500;">{{ fu.follow_up_type }}</td>
+          <td>
+            {% if fu.priority == 'Urgent' %}
+            <span class="badge badge-priority-urgent">🚨 Urgent</span>
+            {% elif fu.priority == 'High' %}
+            <span class="badge badge-priority-high">High</span>
+            {% else %}
+            <span class="badge badge-priority-normal">Normal</span>
+            {% endif %}
+          </td>
+          <td>{{ fu.doctor_name or '—' }}</td>
+          <td class="text-sm text-muted" style="max-width:320px;">{{ fu.notes or 'Routine review' }}</td>
+          <td>
+            {% if fu.status == 'Scheduled' %}
+            <span class="badge badge-status-scheduled">Scheduled</span>
+            {% elif fu.status == 'Completed' %}
+            <span class="badge badge-status-completed">✓ Completed</span>
+            {% elif fu.status == 'Overdue' %}
+            <span class="badge badge-status-overdue">⚠️ Overdue</span>
+            {% else %}
+            <span class="badge badge-status-cancelled">Cancelled</span>
+            {% endif %}
+          </td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex;gap:4px;">
+              <a href="/follow_up/whatsapp/{{ fu.follow_up_id }}" target="_blank" class="btn btn-secondary btn-xs" title="Send WhatsApp Reminder" style="color:#15803d;font-weight:600;">💬 WA</a>
+              {% if can('follow_ups.edit') and fu.status != 'Completed' %}
+              <a href="/follow_up/status/{{ fu.follow_up_id }}?new_status=Completed&redirect=chart" class="btn btn-secondary btn-xs" title="Mark as Completed" style="color:#15803d;">✓ Done</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="layout-two-col">
+  <div>
+    <!-- Visits -->
+    <div class="panel mb-16">
+      <div class="panel-header">
+        <div class="panel-title"><span class="ptitle-icon">🗓️</span>Visit History</div>
+        {% if can('visits.add') %}
+        <a href="/visits/add?patient_id={{ patient.patient_id }}" class="btn btn-secondary btn-xs">+ Add</a>
+        {% endif %}
+      </div>
+      <div class="panel-body-flush">
+        <table class="data-table">
+          <thead>
+            <tr><th>Visit ID</th><th>Date</th><th>Doctor</th><th style="text-align:right;">Actions</th></tr>
+          </thead>
+          <tbody>
+            {% for v in visits %}
+            <tr>
+              <td class="td-id">#V{{ '%04d' % v.visit_id }}</td>
+              <td>{{ v.visit_date }}</td>
+              <td>{{ v.doctor_name }}</td>
+              <td style="text-align:right;">
+                <div style="display:inline-flex;gap:4px;">
+                  <a href="/prescription/{{ v.visit_id }}" target="_blank" class="btn btn-secondary btn-xs" title="Print Prescription">🖨️ Rx</a>
+                  <a href="/bill/visit/{{ v.visit_id }}" target="_blank" class="btn btn-secondary btn-xs" title="View & Print Bill">🧾 Bill</a>
+                  <a href="/prescription/whatsapp/{{ v.visit_id }}" target="_blank" class="btn btn-secondary btn-xs" title="Send Prescription & Bill via WhatsApp" style="color:#15803d;font-weight:600;">💬 WA</a>
+                </div>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-muted text-sm text-center" style="padding:16px;">No visits yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Diagnoses -->
+    <div class="panel mb-16">
+      <div class="panel-header">
+        <div class="panel-title"><span class="ptitle-icon">🩺</span>Diagnoses</div>
+        {% if can('diagnoses.add') %}
+        <a href="/diagnoses/add" class="btn btn-secondary btn-xs">+ Add</a>
+        {% endif %}
+      </div>
+      <div class="panel-body-flush">
+        <table class="data-table">
+          <thead>
+            <tr><th>Visit</th><th>Condition</th></tr>
+          </thead>
+          <tbody>
+            {% for d in diagnoses %}
+            <tr>
+              <td class="td-id">#V{{ '%04d' % d.visit_id }}</td>
+              <td><span class="badge badge-amber">{{ d.disease_name }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="2" class="text-muted text-sm text-center" style="padding:16px;">No diagnoses recorded.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <!-- Lab Results -->
+    <div class="panel mb-16">
+      <div class="panel-header">
+        <div class="panel-title"><span class="ptitle-icon">🧪</span>Lab Results</div>
+        {% if can('labs.add') %}
+        <a href="/lab_results/add" class="btn btn-secondary btn-xs">+ Add</a>
+        {% endif %}
+      </div>
+      <div class="panel-body-flush">
+        {% for l in labs %}
+        <div style="padding:10px 16px;border-bottom:1px solid var(--gray-100);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:13px;font-weight:500;color:var(--gray-800);">{{ l.test_name }}</div>
+            <span class="badge badge-teal" style="font-family:'JetBrains Mono',monospace;font-size:11px;">{{ l.result_value }}</span>
+          </div>
+          <div class="text-xs text-muted mt-4">Visit #V{{ '%04d' % l.visit_id }}</div>
+        </div>
+        {% else %}
+        <div class="text-muted text-sm text-center" style="padding:16px;">No lab results yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Medications -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="ptitle-icon">💊</span>Medications</div>
+        {% if can('medications.add') %}
+        <a href="/medications/add" class="btn btn-secondary btn-xs">+ Prescribe</a>
+        {% endif %}
+      </div>
+      <div class="panel-body-flush">
+        {% for m in meds %}
+        <div style="padding:10px 16px;border-bottom:1px solid var(--gray-100);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:13px;font-weight:500;color:var(--gray-800);">{{ m.drug_name }}</div>
+            <span class="badge badge-green">{{ m.dosage }}</span>
+          </div>
+          <div class="text-xs text-muted mt-4">Visit #V{{ '%04d' % m.visit_id }}</div>
+        </div>
+        {% else %}
+        <div class="text-muted text-sm text-center" style="padding:16px;">No medications prescribed.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

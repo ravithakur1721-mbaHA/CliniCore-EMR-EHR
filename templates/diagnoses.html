@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Diagnoses{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Clinical Diagnoses</h1>
+    <div class="breadcrumb">🏥 CliniCore &rsaquo; Diagnoses</div>
+  </div>
+  <div class="page-header-right">
+    {% if can('diagnoses.add') %}
+    <a href="/diagnoses/add" class="btn btn-primary btn-sm">+ Add Diagnosis</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header" style="flex-wrap:wrap;gap:12px;">
+    <div class="panel-title">
+      <span class="ptitle-icon">🩺</span>All Diagnoses
+      <span class="badge badge-gray" style="margin-left:4px;">{{ total_items }} total</span>
+    </div>
+
+    <!-- Search -->
+    <form method="GET" action="/diagnoses" style="display:flex;gap:8px;align-items:center;margin-left:auto;">
+      <input
+        type="text"
+        name="q"
+        value="{{ q or '' }}"
+        placeholder="🔍 Search disease, patient…"
+        class="form-control"
+        style="width:220px;padding:5px 10px;font-size:12.5px;"
+      >
+      <button type="submit" class="btn btn-secondary btn-xs" style="padding:6px 12px;">Search</button>
+      {% if q %}
+      <a href="/diagnoses" class="btn btn-secondary btn-xs" style="padding:6px 10px;">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="panel-body-flush">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width:75px;">ID</th>
+          <th>Patient</th>
+          <th>Visit</th>
+          <th>Disease / Condition</th>
+          <th style="text-align:right;width:120px;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in diagnoses %}
+        <tr>
+          <td class="td-id">#D{{ '%04d' % d.diagnosis_id }}</td>
+          <td>
+            <div class="patient-cell">
+              <div class="patient-avatar {{ 'pa-female' if d.gender == 'Female' else 'pa-male' }}">
+                {{ d.patient_name[0]|upper }}
+              </div>
+              <a href="/patient/{{ d.patient_id }}" class="patient-name">{{ d.patient_name }}</a>
+            </div>
+          </td>
+          <td class="td-id">#V{{ '%04d' % d.visit_id }}</td>
+          <td>
+            <span class="badge badge-amber" style="font-size:12px;">🩺 {{ d.disease_name }}</span>
+          </td>
+          <td style="text-align:right;">
+            <a href="/patient/{{ d.patient_id }}" class="btn btn-secondary btn-xs">Chart</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">
+          <div class="empty-state">
+            <div class="es-icon">🩺</div>
+            <div class="es-msg">No diagnoses found.</div>
+            <div class="es-sub"><a href="/diagnoses/add">Add diagnosis</a></div>
+          </div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGINATION BAR -->
+  {% if total_pages > 1 %}
+  <div class="pagination-bar">
+    <div>
+      Showing {{ (page - 1) * per_page + 1 }} to {{ [page * per_page, total_items]|min }} of {{ total_items }} diagnoses
+    </div>
+    <div class="pagination-controls">
+      <a href="/diagnoses?page=1{% if q %}&q={{ q }}{% endif %}" class="page-link {% if page == 1 %}disabled{% endif %}">« First</a>
+      <a href="/diagnoses?page={{ page - 1 }}{% if q %}&q={{ q }}{% endif %}" class="page-link {% if page == 1 %}disabled{% endif %}">‹ Prev</a>
+
+      {% for p_num in page_range %}
+      <a href="/diagnoses?page={{ p_num }}{% if q %}&q={{ q }}{% endif %}" class="page-link {% if p_num == page %}active{% endif %}">{{ p_num }}</a>
+      {% endfor %}
+
+      <a href="/diagnoses?page={{ page + 1 }}{% if q %}&q={{ q }}{% endif %}" class="page-link {% if page == total_pages %}disabled{% endif %}">Next ›</a>
+      <a href="/diagnoses?page={{ total_pages }}{% if q %}&q={{ q }}{% endif %}" class="page-link {% if page == total_pages %}disabled{% endif %}">Last »</a>
+    </div>
+  </div>
+  {% else %}
+  <div class="panel-footer">
+    <span>{{ total_items }} diagnosis record{{ 's' if total_items != 1 else '' }}</span>
+    {% if can('diagnoses.add') %}
+    <a href="/diagnoses/add" class="btn btn-primary btn-xs">+ Add Diagnosis</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

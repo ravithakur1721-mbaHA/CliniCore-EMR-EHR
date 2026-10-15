@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block title %}Follow-Up Management{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Clinical Follow-Up Tracker</h1>
+    <div class="breadcrumb">🏥 CliniCore &rsaquo; Follow-Ups</div>
+  </div>
+  <div class="page-header-right">
+    {% if can('follow_ups.add') %}
+    <a href="/follow_ups/add" class="btn btn-primary btn-sm">+ Schedule Follow-Up</a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- FILTER TABS & SUMMARY CARDS -->
+<div class="stats-row mb-16">
+  <a href="/follow_ups?status=All{% if doctor_filter %}&doctor={{ doctor_filter }}{% endif %}" class="stat-card" style="text-decoration:none;cursor:pointer;border-top:3px solid var(--blue);">
+    <div class="stat-icon blue">📅</div>
+    <div class="stat-body">
+      <div class="stat-value">{{ counts.total }}</div>
+      <div class="stat-label">Total Follow-Ups</div>
+      <div class="stat-delta flat">All records</div>
+    </div>
+  </a>
+
+  <a href="/follow_ups?status=Scheduled{% if doctor_filter %}&doctor={{ doctor_filter }}{% endif %}" class="stat-card" style="text-decoration:none;cursor:pointer;border-top:3px solid #0284c7;">
+    <div class="stat-icon teal">🕒</div>
+    <div class="stat-body">
+      <div class="stat-value">{{ counts.scheduled }}</div>
+      <div class="stat-label">Scheduled</div>
+      <div class="stat-delta flat">Upcoming review</div>
+    </div>
+  </a>
+
+  <a href="/follow_ups?status=Overdue{% if doctor_filter %}&doctor={{ doctor_filter }}{% endif %}" class="stat-card" style="text-decoration:none;cursor:pointer;border-top:3px solid #dc2626;">
+    <div class="stat-icon red">⚠️</div>
+    <div class="stat-body">
+      <div class="stat-value" style="color:#b91c1c;">{{ counts.overdue }}</div>
+      <div class="stat-label">Overdue</div>
+      <div class="stat-delta down" style="color:#b91c1c;">Requires action</div>
+    </div>
+  </a>
+
+  <a href="/follow_ups?status=Completed{% if doctor_filter %}&doctor={{ doctor_filter }}{% endif %}" class="stat-card" style="text-decoration:none;cursor:pointer;border-top:3px solid #16a34a;">
+    <div class="stat-icon green">✅</div>
+    <div class="stat-body">
+      <div class="stat-value">{{ counts.completed }}</div>
+      <div class="stat-label">Completed</div>
+      <div class="stat-delta up">Attended &amp; resolved</div>
+    </div>
+  </a>
+</div>
+
+<!-- MAIN PANEL -->
+<div class="panel">
+  <div class="panel-header" style="flex-wrap:wrap;gap:12px;">
+    <div class="panel-title">
+      <span class="ptitle-icon">📋</span>Follow-Up Schedule
+      <span class="badge badge-gray" style="margin-left:4px;">{{ total_items }} total</span>
+    </div>
+
+    <!-- Filters form -->
+    <form method="GET" action="/follow_ups" style="display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap;">
+      <select name="status" class="form-control" style="font-size:12.5px;padding:5px 8px;width:130px;" onchange="this.form.submit()">
+        <option value="All" {% if status_filter == 'All' %}selected{% endif %}>All Statuses</option>
+        <option value="Scheduled" {% if status_filter == 'Scheduled' %}selected{% endif %}>Scheduled</option>
+        <option value="Overdue" {% if status_filter == 'Overdue' %}selected{% endif %}>⚠️ Overdue</option>
+        <option value="Completed" {% if status_filter == 'Completed' %}selected{% endif %}>Completed</option>
+        <option value="Cancelled" {% if status_filter == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+      </select>
+
+      <select name="priority" class="form-control" style="font-size:12.5px;padding:5px 8px;width:125px;" onchange="this.form.submit()">
+        <option value="All" {% if priority_filter == 'All' %}selected{% endif %}>All Priorities</option>
+        <option value="Urgent" {% if priority_filter == 'Urgent' %}selected{% endif %}>🚨 Urgent</option>
+        <option value="High" {% if priority_filter == 'High' %}selected{% endif %}>High</option>
+        <option value="Normal" {% if priority_filter == 'Normal' %}selected{% endif %}>Normal</option>
+      </select>
+
+      <input
+        type="text"
+        name="q"
+        value="{{ q }}"
+        placeholder="🔍 Search patient…"
+        class="form-control"
+        style="width:160px;font-size:12.5px;padding:5px 10px;"
+      >
+      <button type="submit" class="btn btn-secondary btn-xs" style="padding:6px 10px;">Filter</button>
+      {% if q or status_filter != 'All' or priority_filter != 'All' %}
+      <a href="/follow_ups" class="btn btn-secondary btn-xs" style="padding:6px 10px;">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="panel-body-flush">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width:70px;">ID</th>
+          <th>Patient</th>
+          <th>Scheduled Date</th>
+          <th>Type / Reason</th>
+          <th>Priority</th>
+          <th>Doctor</th>
+          <th>Status</th>
+          <th style="text-align:right;width:160px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fu in follow_ups %}
+        <tr>
+          <td class="td-id">#FU{{ '%04d' % fu.follow_up_id }}</td>
+          <td>
+            <div class="patient-cell">
+              <div class="patient-avatar {{ 'pa-female' if fu.gender == 'Female' else 'pa-male' }}">
+                {{ fu.patient_name[0]|upper }}
+              </div>
+              <div>
+                <a href="/patient/{{ fu.patient_id }}" class="patient-name">{{ fu.patient_name }}</a>
+                <div class="patient-id-sub">#P{{ '%04d' % fu.patient_id }} · {{ fu.contact }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;color:{{ '#b91c1c' if fu.status == 'Overdue' else '#1e293b' }};">
+              {{ fu.scheduled_date }}
+            </div>
+            {% if fu.status == 'Overdue' %}
+            <div style="font-size:10px;color:#dc2626;font-weight:600;">Action overdue</div>
+            {% endif %}
+          </td>
+          <td>
+            <div style="font-weight:500;color:var(--gray-800);">{{ fu.follow_up_type }}</div>
+            {% if fu.notes %}
+            <div class="text-xs text-muted" style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="{{ fu.notes }}">
+              {{ fu.notes }}
+            </div>
+            {% endif %}
+          </td>
+          <td>
+            {% if fu.priority == 'Urgent' %}
+            <span class="badge badge-priority-urgent">🚨 Urgent</span>
+            {% elif fu.priority == 'High' %}
+            <span class="badge badge-priority-high">High</span>
+            {% else %}
+            <span class="badge badge-priority-normal">Normal</span>
+            {% endif %}
+          </td>
+          <td>{{ fu.doctor_name or '—' }}</td>
+          <td>
+            {% if fu.status == 'Scheduled' %}
+            <span class="badge badge-status-scheduled">Scheduled</span>
+            {% elif fu.status == 'Completed' %}
+            <span class="badge badge-status-completed">✓ Completed</span>
+            {% elif fu.status == 'Overdue' %}
+            <span class="badge badge-status-overdue">⚠️ Overdue</span>
+            {% else %}
+            <span class="badge badge-status-cancelled">Cancelled</span>
+            {% endif %}
+          </td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex;gap:4px;">
+              <a href="/follow_up/whatsapp/{{ fu.follow_up_id }}" target="_blank" class="btn btn-secondary btn-xs" title="Send WhatsApp Reminder" style="color:#15803d;font-weight:600;">
+                💬 WA
+              </a>
+              {% if can('follow_ups.edit') %}
+                {% if fu.status != 'Completed' %}
+                <a href="/follow_up/status/{{ fu.follow_up_id }}?new_status=Completed" class="btn btn-secondary btn-xs" title="Mark as Completed" style="color:#15803d;">✓</a>
+                {% endif %}
+                {% if fu.status != 'Cancelled' and fu.status != 'Completed' %}
+                <a href="/follow_up/status/{{ fu.follow_up_id }}?new_status=Cancelled" class="btn btn-secondary btn-xs" title="Cancel Follow-Up" style="color:#6b7280;">✕</a>
+                {% endif %}
+              {% endif %}
+              <a href="/patient/{{ fu.patient_id }}" class="btn btn-secondary btn-xs">Chart</a>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8">
+            <div class="empty-state">
+              <div class="es-icon">📅</div>
+              <div class="es-msg">No follow-ups match your current filter.</div>
+              <div class="es-sub"><a href="/follow_ups">Reset filters</a></div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGINATION BAR -->
+  {% if total_pages > 1 %}
+  <div class="pagination-bar">
+    <div>
+      Showing {{ (page - 1) * per_page + 1 }} to {{ [page * per_page, total_items]|min }} of {{ total_items }} records
+    </div>
+    <div class="pagination-controls">
+      <a href="/follow_ups?page=1&status={{ status_filter }}&priority={{ priority_filter }}&q={{ q }}" class="page-link {% if page == 1 %}disabled{% endif %}">« First</a>
+      <a href="/follow_ups?page={{ page - 1 }}&status={{ status_filter }}&priority={{ priority_filter }}&q={{ q }}" class="page-link {% if page == 1 %}disabled{% endif %}">‹ Prev</a>
+
+      {% for p_num in page_range %}
+      <a href="/follow_ups?page={{ p_num }}&status={{ status_filter }}&priority={{ priority_filter }}&q={{ q }}" class="page-link {% if p_num == page %}active{% endif %}">{{ p_num }}</a>
+      {% endfor %}
+
+      <a href="/follow_ups?page={{ page + 1 }}&status={{ status_filter }}&priority={{ priority_filter }}&q={{ q }}" class="page-link {% if page == total_pages %}disabled{% endif %}">Next ›</a>
+      <a href="/follow_ups?page={{ total_pages }}&status={{ status_filter }}&priority={{ priority_filter }}&q={{ q }}" class="page-link {% if page == total_pages %}disabled{% endif %}">Last »</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

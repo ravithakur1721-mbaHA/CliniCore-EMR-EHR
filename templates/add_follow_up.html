@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Schedule Clinical Follow-Up{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Schedule Follow-Up</h1>
+    <div class="breadcrumb">🏥 CliniCore &rsaquo; <a href="/follow_ups">Follow-Ups</a> &rsaquo; New Schedule</div>
+  </div>
+</div>
+
+<div class="form-card" style="max-width:720px;">
+  <div class="form-card-header">
+    <div class="fch-title">📅 New Patient Follow-Up Consultation</div>
+    <div class="fch-sub">Configure review date, priority, and clinical monitoring instructions.</div>
+  </div>
+
+  <form method="POST" action="/follow_ups/add">
+    <div class="form-body">
+
+      <div class="form-group">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <label class="form-label" style="margin:0;">Select Patient <span class="req">*</span></label>
+          <a href="/patients/add" class="text-xs" style="color:var(--blue);font-weight:600;">+ Register New Patient</a>
+        </div>
+
+        <input 
+          type="text" 
+          id="fu-patient-filter" 
+          class="form-control mb-8" 
+          placeholder="🔍 Type patient name, phone, or ID to quickly find…"
+          style="font-size:12.5px;padding:6px 12px;"
+          autocomplete="off"
+        >
+
+        <select name="patient_id" class="form-control" required id="patient_id" size="6" style="height:auto;font-size:13px;padding:6px;">
+          {% for p in patients %}
+          <option value="{{ p.patient_id }}" {% if selected_patient_id and selected_patient_id|int == p.patient_id %}selected{% endif %}>
+            #P{{ '%04d' % p.patient_id }} — {{ p.name }} ({{ p.age }}y, {{ p.gender }}) · 📞 {{ p.contact }}
+          </option>
+          {% endfor %}
+        </select>
+        <div class="text-xs text-muted mt-4" id="fu-patient-count-hint">Showing all {{ patients|length }} registered patients (newest first).</div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Scheduled Review Date <span class="req">*</span></label>
+          <input
+            type="date"
+            name="scheduled_date"
+            class="form-control"
+            required
+            value="{{ default_date }}"
+          >
+        </div>
+        <div class="form-group">
+          <label class="form-label">Priority Level <span class="req">*</span></label>
+          <select name="priority" class="form-control" required>
+            <option value="Normal">Normal — Standard Review</option>
+            <option value="High">High — Close Observation</option>
+            <option value="Urgent">🚨 Urgent — Critical Review</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Follow-Up Type / Reason <span class="req">*</span></label>
+          <select name="follow_up_type" class="form-control" required>
+            <option value="Routine Review">Routine Review</option>
+            <option value="HbA1c Monitoring">HbA1c Monitoring</option>
+            <option value="BP Check &amp; Titration">BP Check &amp; Titration</option>
+            <option value="Post-Op Check">Post-Op Check</option>
+            <option value="Pulmonary Review">Pulmonary Review</option>
+            <option value="Lipid Re-evaluation">Lipid Re-evaluation</option>
+            <option value="Infection Resolution">Infection Resolution</option>
+            <option value="Thyroid Titration">Thyroid Titration</option>
+            <option value="Renal Panel Review">Renal Panel Review</option>
+            <option value="Hemoglobin Recheck">Hemoglobin Recheck</option>
+            <option value="Specialist Consultation">Specialist Consultation</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Attending / Reviewing Physician</label>
+          <input
+            type="text"
+            name="doctor_name"
+            class="form-control"
+            placeholder="e.g. Dr. Rajesh Gupta"
+            value="{{ default_doctor }}"
+          >
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Clinical Instructions &amp; Action Plan</label>
+        <textarea
+          name="notes"
+          class="form-control"
+          rows="3"
+          placeholder="e.g. Check repeat fasting blood sugar, evaluate compliance with Metformin, review home blood pressure logs."
+        ></textarea>
+      </div>
+
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Schedule Follow-Up</button>
+      <a href="/follow_ups" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  const fuFilterInput = document.getElementById('fu-patient-filter');
+  const fuSelectBox = document.getElementById('patient_id');
+  const fuAllOptions = Array.from(fuSelectBox.options);
+  const fuHintText = document.getElementById('fu-patient-count-hint');
+
+  fuFilterInput.addEventListener('input', function() {
+    const val = this.value.toLowerCase().trim();
+    fuSelectBox.innerHTML = '';
+    let matches = 0;
+
+    fuAllOptions.forEach(opt => {
+      if (opt.text.toLowerCase().includes(val)) {
+        fuSelectBox.appendChild(opt);
+        matches++;
+      }
+    });
+
+    if (matches > 0 && val.length > 0) {
+      fuSelectBox.selectedIndex = 0;
+    }
+    fuHintText.textContent = `Found ${matches} matching patient(s).`;
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prescription — {{ patient.name }} — {{ visit.visit_date }}</title>
+  <meta name="description" content="Prescription for {{ patient.name }} issued on {{ visit.visit_date }} by {{ visit.doctor_name }}.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IM+Fell+DW+Pica&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── Screen variables ──────────────────────────────────────── */
+    :root {
+      --navy:       #0d2137;
+      --blue:       #1a6fa8;
+      --blue-soft:  #e8f3fb;
+      --teal:       #12858a;
+      --gray-50:    #f8fafc;
+      --gray-100:   #f1f5f9;
+      --gray-200:   #e2e8f0;
+      --gray-400:   #94a3b8;
+      --gray-500:   #64748b;
+      --gray-700:   #334155;
+      --gray-800:   #1e293b;
+      --gray-900:   #0f172a;
+      --white:      #ffffff;
+    }
+
+    /* ── Reset ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 13.5px;
+      background: var(--gray-100);
+      color: var(--gray-800);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+    }
+
+    /* ── Screen-only controls ──────────────────────────────────── */
+    .screen-controls {
+      background: var(--navy);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .screen-controls .brand {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .screen-controls .actions { display: flex; gap: 8px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      border: 1px solid transparent;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn-white  { background: #fff; color: var(--navy); }
+    .btn-blue   { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .btn-white:hover { background: #f1f5f9; }
+
+    /* ── Prescription paper ────────────────────────────────────── */
+    .page-wrapper {
+      max-width: 800px;
+      margin: 28px auto 60px;
+      padding: 0 20px;
+    }
+
+    .rx-sheet {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,.10);
+    }
+
+    /* ── Header / Letterhead ───────────────────────────────────── */
+    .rx-header {
+      background: var(--navy);
+      padding: 24px 32px 20px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .rx-logo-area { display: flex; align-items: center; gap: 12px; }
+    .rx-logo-icon {
+      width: 48px; height: 48px;
+      background: var(--blue);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .rx-clinic-name {
+      color: #fff;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: .3px;
+    }
+    .rx-clinic-sub {
+      color: var(--gray-400);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+    .rx-clinic-addr {
+      color: var(--gray-400);
+      font-size: 11.5px;
+      margin-top: 6px;
+      line-height: 1.6;
+    }
+
+    .rx-header-right { text-align: right; }
+    .rx-date-label {
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--gray-400);
+      margin-bottom: 3px;
+    }
+    .rx-date-value {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .rx-ref-no {
+      color: var(--gray-400);
+      font-size: 11px;
+      margin-top: 6px;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+    }
+
+    /* Blue accent bar */
+    .rx-accent-bar {
+      height: 4px;
+      background: linear-gradient(90deg, var(--blue) 0%, var(--teal) 100%);
+    }
+
+    /* ── Patient strip ─────────────────────────────────────────── */
+    .rx-patient-strip {
+      background: var(--blue-soft);
+      border-bottom: 1px solid #c7dff0;
+      padding: 14px 32px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .rx-patient-field {}
+    .rx-field-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--gray-400);
+      margin-bottom: 3px;
+    }
+    .rx-field-value {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .rx-pid-badge {
+      background: var(--navy);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      letter-spacing: .5px;
+    }
+
+    /* ── Body ──────────────────────────────────────────────────── */
+    .rx-body { padding: 28px 32px; }
+
+    /* ── Rx symbol section ─────────────────────────────────────── */
+    .rx-symbol-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+      border-bottom: 2px solid var(--gray-200);
+      padding-bottom: 16px;
+    }
+
+    .rx-big-r {
+      font-family: 'IM Fell DW Pica', Georgia, serif;
+      font-size: 56px;
+      color: var(--navy);
+      line-height: 1;
+      letter-spacing: -4px;
+    }
+
+    .rx-symbol-info { flex: 1; }
+    .rx-symbol-info .rx-doctor-line {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+    .rx-symbol-info .rx-doctor-reg {
+      font-size: 11.5px;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+    .rx-visit-id {
+      font-size: 11px;
+      color: var(--gray-400);
+      font-family: 'Courier New', monospace;
+      text-align: right;
+    }
+
+    /* ── Section headers ───────────────────────────────────────── */
+    .rx-section { margin-bottom: 22px; }
+    .rx-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--blue);
+      margin-bottom: 10px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ── Diagnoses ─────────────────────────────────────────────── */
+    .diagnosis-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .dx-tag {
+      background: #fff4e5;
+      border: 1px solid #fcd34d;
+      color: #92400e;
+      font-size: 12.5px;
+      font-weight: 500;
+      padding: 4px 12px;
+      border-radius: 12px;
+    }
+
+    /* ── Medications table ─────────────────────────────────────── */
+    .rx-med-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .rx-med-table thead th {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      padding: 8px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--gray-500);
+      text-align: left;
+    }
+
+    .rx-med-table tbody td {
+      border: 1px solid var(--gray-200);
+      padding: 11px 14px;
+      vertical-align: top;
+    }
+
+    .rx-med-table tbody tr:nth-child(even) td {
+      background: var(--gray-50);
+    }
+
+    .med-serial {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .med-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+    .med-generic {
+      font-size: 11.5px;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    .med-dosage-badge {
+      background: #e6f4ec;
+      border: 1px solid #86efac;
+      color: #14532d;
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      display: inline-block;
+    }
+
+    .med-instructions {
+      font-size: 12px;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    /* ── Lab results strip ─────────────────────────────────────── */
+    .lab-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+    .lab-item {
+      border: 1px solid var(--gray-200);
+      border-radius: 4px;
+      padding: 10px 12px;
+      background: var(--gray-50);
+    }
+    .lab-test { font-size: 11.5px; color: var(--gray-500); font-weight: 600; }
+    .lab-result {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--teal);
+      font-family: 'Courier New', monospace;
+      margin-top: 3px;
+    }
+
+    /* ── Doctor notes area ─────────────────────────────────────── */
+    .rx-notes-box {
+      border: 1px dashed var(--gray-300);
+      border-radius: 4px;
+      padding: 14px;
+      min-height: 70px;
+      background: #fffef7;
+      font-size: 13px;
+      color: var(--gray-600);
+      font-style: italic;
+    }
+
+    /* ── Footer ────────────────────────────────────────────────── */
+    .rx-footer {
+      margin-top: 32px;
+      border-top: 1px solid var(--gray-200);
+      padding-top: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .rx-sig-box {
+      border-top: 1.5px solid var(--gray-700);
+      padding-top: 8px;
+      margin-top: 40px;
+    }
+    .rx-sig-label { font-size: 11px; color: var(--gray-500); }
+    .rx-sig-name  { font-size: 13px; font-weight: 600; color: var(--gray-800); margin-top: 2px; }
+    .rx-sig-role  { font-size: 11px; color: var(--gray-500); }
+
+    .rx-qr-placeholder {
+      width: 80px; height: 80px;
+      border: 2px dashed var(--gray-300);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--gray-400);
+      text-align: center;
+      line-height: 1.3;
+      margin-top: 4px;
+    }
+
+    .rx-disclaimer {
+      font-size: 10.5px;
+      color: var(--gray-400);
+      line-height: 1.7;
+      margin-top: 18px;
+    }
+
+    /* ── Page bottom bar ───────────────────────────────────────── */
+    .rx-page-footer {
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-200);
+      padding: 10px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .rx-page-footer .pf-left { font-size: 11px; color: var(--gray-400); }
+    .rx-page-footer .pf-right { font-size: 11px; color: var(--gray-400); }
+
+    /* ══════════════════════════════════════════════════════════════
+       PRINT STYLES — only this fires when printing / Save as PDF
+       ══════════════════════════════════════════════════════════════ */
+    @media print {
+      @page {
+        size: A4;
+        margin: 12mm 14mm;
+      }
+
+      body {
+        background: #fff !important;
+        font-size: 12px;
+      }
+
+      .screen-controls { display: none !important; }
+      .page-wrapper { margin: 0; padding: 0; max-width: 100%; }
+
+      .rx-sheet {
+        border: none;
+        box-shadow: none;
+        border-radius: 0;
+      }
+
+      .rx-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .rx-accent-bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .rx-patient-strip { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .rx-med-table thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .med-serial { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .med-dosage-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .dx-tag { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .lab-item { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .lab-result { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+      .rx-section { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Screen-only top bar ───────────────────────────────────── -->
+  <div class="screen-controls">
+    <div class="brand">
+      <span>🏥</span>
+      <span>CliniCore EHR — Prescription Viewer</span>
+    <div class="actions">
+      {% if invoice %}
+      <a href="/bill/{{ invoice.invoice_id }}" class="btn btn-white">🧾 View Bill</a>
+      {% endif %}
+      {% if whatsapp_link %}
+      <a href="{{ whatsapp_link }}" target="_blank" class="btn" style="background:#25d366;color:#fff;font-weight:600;" title="Send directly to patient's registered phone {{ patient.contact }}">
+        💬 Send via WhatsApp ({{ patient.contact }})
+      </a>
+      {% endif %}
+      <a href="/patient/{{ patient.patient_id }}" class="btn btn-white">← Back to Chart</a>
+      <button onclick="window.print()" class="btn btn-blue" id="print-btn">
+        🖨️ Print / Save as PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Prescription Sheet ─────────────────────────────────────── -->
+  <div class="page-wrapper">
+    <div class="rx-sheet">
+
+      <!-- LETTERHEAD -->
+      <div class="rx-header">
+        <div class="rx-logo-area">
+          <div class="rx-logo-icon">🏥</div>
+          <div>
+            <div class="rx-clinic-name">CliniCore General Hospital</div>
+            <div class="rx-clinic-sub">EHR / EMR System · Prescription</div>
+            <div class="rx-clinic-addr">
+              123 Medical Centre Road, Health District<br>
+              📞 +91-1234-567890 &nbsp;·&nbsp; 🌐 clinicore.health
+            </div>
+          </div>
+        </div>
+        <div class="rx-header-right">
+          <div class="rx-date-label">Date Issued</div>
+          <div class="rx-date-value">{{ visit.visit_date }}</div>
+          <div class="rx-ref-no">REF: RX-{{ '%06d' % visit.visit_id }}</div>
+          <div class="rx-ref-no" style="margin-top:4px;">Printed: {{ now }}</div>
+        </div>
+      </div>
+      <div class="rx-accent-bar"></div>
+
+      <!-- PATIENT STRIP -->
+      <div class="rx-patient-strip">
+        <div class="rx-patient-field">
+          <div class="rx-field-label">Patient Name</div>
+          <div class="rx-field-value">{{ patient.name }}</div>
+        </div>
+        <div class="rx-patient-field">
+          <div class="rx-field-label">Age / Gender</div>
+          <div class="rx-field-value">{{ patient.age }} yrs &nbsp;·&nbsp; {{ patient.gender }}</div>
+        </div>
+        <div class="rx-patient-field">
+          <div class="rx-field-label">Contact</div>
+          <div class="rx-field-value" style="font-family:'Courier New',monospace;font-size:13px;">
+            {{ patient.contact }}
+          </div>
+        </div>
+        <div class="rx-pid-badge">
+          #P{{ '%04d' % patient.patient_id }}
+        </div>
+      </div>
+
+      <!-- BODY -->
+      <div class="rx-body">
+
+        <!-- Rx Symbol + Doctor -->
+        <div class="rx-symbol-row">
+          <div class="rx-big-r">℞</div>
+          <div class="rx-symbol-info">
+            <div class="rx-doctor-line">{{ visit.doctor_name }}</div>
+            <div class="rx-doctor-reg">Attending Physician &nbsp;·&nbsp; CliniCore General Hospital</div>
+          </div>
+          <div class="rx-visit-id">
+            Visit: #V{{ '%04d' % visit.visit_id }}<br>
+            {{ visit.visit_date }}
+          </div>
+        </div>
+
+        <!-- DIAGNOSES -->
+        {% if diagnoses %}
+        <div class="rx-section">
+          <div class="rx-section-title">🩺 Diagnosis / Clinical Findings</div>
+          <div class="diagnosis-list">
+            {% for d in diagnoses %}
+            <span class="dx-tag">{{ d.disease_name }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- MEDICATIONS -->
+        <div class="rx-section">
+          <div class="rx-section-title">💊 Prescribed Medications</div>
+          {% if medications %}
+          <table class="rx-med-table">
+            <thead>
+              <tr>
+                <th style="width:44px;">#</th>
+                <th>Drug / Medication</th>
+                <th style="width:180px;">Dosage &amp; Frequency</th>
+                <th style="width:160px;">Instructions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for i, m in medications %}
+              <tr>
+                <td style="text-align:center;vertical-align:middle;">
+                  <div class="med-serial">{{ i + 1 }}</div>
+                </td>
+                <td>
+                  <div class="med-name">{{ m.drug_name }}</div>
+                  <div class="med-generic">Prescribed for this visit</div>
+                </td>
+                <td style="vertical-align:middle;">
+                  <span class="med-dosage-badge">{{ m.dosage }}</span>
+                  <div class="med-instructions">
+                    {% if 'OD' in m.dosage %}Once daily (OD){% endif %}
+                    {% if 'BD' in m.dosage %}Twice daily (BD){% endif %}
+                    {% if 'TID' in m.dosage %}Three times daily (TID){% endif %}
+                    {% if 'SOS' in m.dosage %}As needed (SOS){% endif %}
+                    {% if 'HS' in m.dosage %}At bedtime (HS){% endif %}
+                    {% if 'Weekly' in m.dosage %}Once a week{% endif %}
+                  </div>
+                </td>
+                <td style="vertical-align:middle;">
+                  <div style="font-size:12px;color:#475569;line-height:1.5;">
+                    Take as directed.<br>
+                    Complete full course.
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <div style="color:#94a3b8;font-size:13px;padding:12px 0;">
+            No medications prescribed for this visit.
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- LAB RESULTS (if any) -->
+        {% if labs %}
+        <div class="rx-section">
+          <div class="rx-section-title">🧪 Laboratory Results</div>
+          <div class="lab-grid">
+            {% for l in labs %}
+            <div class="lab-item">
+              <div class="lab-test">{{ l.test_name }}</div>
+              <div class="lab-result">{{ l.result_value }}</div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- DOCTOR'S NOTES -->
+        <div class="rx-section">
+          <div class="rx-section-title">📝 Doctor's Notes / Special Instructions</div>
+          <div class="rx-notes-box">
+            Take prescribed medications as directed. Return for follow-up if symptoms persist or worsen.
+            Maintain a healthy diet and adequate fluid intake. Avoid self-medication.
+          </div>
+        </div>
+
+        <!-- FOOTER / SIGNATURE -->
+        <div class="rx-footer">
+          <div>
+            <div style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">
+              Next Follow-Up
+            </div>
+            <div style="border:1px dashed #cbd5e1;border-radius:4px;padding:10px 16px;font-size:13px;color:#94a3b8;">
+              As advised by physician
+            </div>
+
+            <div style="margin-top:16px;">
+              <div class="rx-sig-box">
+                <div class="rx-sig-label">Physician Signature &amp; Stamp</div>
+                <div class="rx-sig-name">{{ visit.doctor_name }}</div>
+                <div class="rx-sig-role">Attending Physician · CliniCore Hospital</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="text-align:right;">
+            <div style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">
+              Verify this Prescription
+            </div>
+            <div class="rx-qr-placeholder" style="margin-left:auto;">
+              QR<br>Code<br>Area
+            </div>
+            <div style="font-size:10.5px;color:#94a3b8;margin-top:6px;line-height:1.5;">
+              Scan to verify authenticity<br>Ref: RX-{{ '%06d' % visit.visit_id }}
+            </div>
+
+            <div class="rx-disclaimer">
+              ⚠️ This prescription is valid for 30 days from the date of issue.<br>
+              This document is computer-generated and does not require a physical seal<br>
+              unless mandated by law. For pharmacy dispensing use only.
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /rx-body -->
+
+      <!-- PAGE FOOTER -->
+      <div class="rx-page-footer">
+        <div class="pf-left">
+          CliniCore EHR · Electronic Medical Record System · Confidential Patient Document
+        </div>
+        <div class="pf-right">
+          Generated: {{ now }} · Page 1 of 1
+        </div>
+      </div>
+
+    </div><!-- /rx-sheet -->
+  </div><!-- /page-wrapper -->
+
+  <script>
+    // Auto-focus on print button on load
+    document.getElementById('print-btn')?.focus();
+
+    // Keyboard shortcut Ctrl+P / Cmd+P is browser native — no overrides needed
+  </script>
+
+</body>
+</html>

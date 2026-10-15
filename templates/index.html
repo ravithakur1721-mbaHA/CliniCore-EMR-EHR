@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Clinical Dashboard</h1>
+    <div class="breadcrumb">🏥 CliniCore &rsaquo; Dashboard</div>
+  </div>
+  <div class="page-header-right">
+    <span style="font-size:12px;color:#64748b;">🕐 {{ now }}</span>
+    {% if can('patients.add') %}
+    <a href="/patients/add" class="btn btn-primary btn-sm">+ Register Patient</a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- STAT CARDS -->
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-icon blue">👥</div>
+    <div class="stat-body">
+      <div class="stat-value">{{ stats.patients }}</div>
+      <div class="stat-label">Total Patients</div>
+      <div class="stat-delta up">↑ Active records</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon teal">🗓️</div>
+    <div class="stat-body">
+      <div class="stat-value">{{ stats.visits }}</div>
+      <div class="stat-label">Total Visits</div>
+      <div class="stat-delta flat">All time</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon amber">🩺</div>
+    <div class="stat-body">
+      <div class="stat-value">{{ stats.diagnoses }}</div>
+      <div class="stat-label">Diagnoses Recorded</div>
+      <div class="stat-delta flat">Across all visits</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green">🧪</div>
+    <div class="stat-body">
+      <div class="stat-value">{{ stats.labs }}</div>
+      <div class="stat-label">Lab Results</div>
+      <div class="stat-delta flat">Stored</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon red">💊</div>
+    <div class="stat-body">
+      <div class="stat-value">{{ stats.meds }}</div>
+      <div class="stat-label">Medications</div>
+      <div class="stat-delta flat">Prescribed</div>
+    </div>
+  </div>
+  <a href="/follow_ups" class="stat-card" style="text-decoration:none;cursor:pointer;">
+    <div class="stat-icon purple" style="background:#f3e8ff;color:#9333ea;">📅</div>
+    <div class="stat-body">
+      <div class="stat-value">{{ stats.follow_ups }}</div>
+      <div class="stat-label">Follow-Ups</div>
+      <div class="stat-delta {% if stats.overdue_follow_ups > 0 %}down{% else %}up{% endif %}" style="{% if stats.overdue_follow_ups > 0 %}color:#dc2626;{% endif %}">
+        {% if stats.overdue_follow_ups > 0 %}⚠️ {{ stats.overdue_follow_ups }} Overdue{% else %}✓ Care Active{% endif %}
+      </div>
+    </div>
+  </a>
+</div>
+
+<!-- QUICK ACTIONS -->
+<div class="panel mb-16">
+  <div class="panel-header">
+    <div class="panel-title"><span class="ptitle-icon">⚡</span>Quick Actions</div>
+  </div>
+  <div class="panel-body">
+    <div class="quick-actions">
+      {% if can('patients.add') %}
+      <a href="/patients/add" class="qa-btn">
+        <span class="qa-icon">➕</span>
+        <span class="qa-label">Register Patient</span>
+      </a>
+      {% endif %}
+
+      {% if can('visits.add') %}
+      <a href="/visits/add" class="qa-btn">
+        <span class="qa-icon">🗓️</span>
+        <span class="qa-label">Add Visit</span>
+      </a>
+      {% endif %}
+
+      {% if can('diagnoses.add') %}
+      <a href="/diagnoses/add" class="qa-btn">
+        <span class="qa-icon">🩺</span>
+        <span class="qa-label">Add Diagnosis</span>
+      </a>
+      {% endif %}
+
+      {% if can('labs.add') %}
+      <a href="/lab_results/add" class="qa-btn">
+        <span class="qa-icon">🧪</span>
+        <span class="qa-label">Add Lab Result</span>
+      </a>
+      {% endif %}
+
+      {% if can('medications.add') %}
+      <a href="/medications/add" class="qa-btn">
+        <span class="qa-icon">💊</span>
+        <span class="qa-label">Prescribe Medication</span>
+      </a>
+      {% endif %}
+
+      {% if can('follow_ups.view') %}
+      <a href="/follow_ups" class="qa-btn">
+        <span class="qa-icon">📅</span>
+        <span class="qa-label">Follow-Up Tracker</span>
+      </a>
+      {% endif %}
+
+      {% if can('analytics.view') %}
+      <a href="/analytics" class="qa-btn">
+        <span class="qa-icon">📈</span>
+        <span class="qa-label">View Analytics</span>
+      </a>
+      {% endif %}
+
+      {% if can('ehr.view') %}
+      <a href="/ehr" class="qa-btn">
+        <span class="qa-icon">📋</span>
+        <span class="qa-label">Full EHR Records</span>
+      </a>
+      {% endif %}
+
+      {% if can('admin.users') %}
+      <a href="/admin/users" class="qa-btn">
+        <span class="qa-icon">🔐</span>
+        <span class="qa-label">Manage Users</span>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM TWO-COL -->
+<div class="layout-two-col">
+
+  <!-- Recent Patients -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="ptitle-icon">👥</span>Recent Patients</div>
+      <a href="/patients" class="btn btn-secondary btn-xs">View All</a>
+    </div>
+    <div class="panel-body-flush">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Age / Gender</th>
+            <th>Contact</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in recent_patients %}
+          <tr>
+            <td>
+              <div class="patient-cell">
+                <div class="patient-avatar {{ 'pa-female' if p.gender == 'Female' else 'pa-male' }}">
+                  {{ p.name[0]|upper }}
+                </div>
+                <div>
+                  <div class="patient-name">{{ p.name }}</div>
+                  <div class="patient-id-sub">#P{{ '%04d' % p.patient_id }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              {{ p.age }}y
+              <span class="badge {{ 'badge-blue' if p.gender == 'Male' else 'badge-amber' }}" style="margin-left:4px;">
+                {{ p.gender }}
+              </span>
+            </td>
+            <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">{{ p.contact }}</td>
+            <td>
+              <a href="/patient/{{ p.patient_id }}" class="btn btn-secondary btn-xs">Chart</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-center text-muted" style="padding:20px;">No patients yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Summary sidebar -->
+  <div>
+    <!-- Gender split -->
+    <div class="panel mb-16">
+      <div class="panel-header">
+        <div class="panel-title"><span class="ptitle-icon">📊</span>Gender Distribution</div>
+      </div>
+      <div class="panel-body">
+        {% for row in gender_dist %}
+        <div style="margin-bottom:12px;">
+          <div class="flex-between mb-4">
+            <span style="font-size:13px;font-weight:500;">{{ row.gender }}</span>
+            <span style="font-size:13px;font-weight:600;color:#1e293b;">{{ row.count }}</span>
+          </div>
+          <div style="background:#e2e8f0;border-radius:3px;height:6px;overflow:hidden;">
+            <div style="height:100%;background:{{ '#1a6fa8' if row.gender == 'Male' else '#be185d' }};border-radius:3px;width:{{ ((row.count / stats.patients) * 100)|int if stats.patients > 0 else 0 }}%;"></div>
+          </div>
+        </div>
+        {% endfor %}
+        {% if stats.avg_age %}
+        <div class="flex-between mt-8" style="border-top:1px solid #e2e8f0;padding-top:10px;margin-top:4px;">
+          <span class="text-muted text-sm">Average Patient Age</span>
+          <span style="font-weight:700;font-size:16px;color:#1e293b;">{{ stats.avg_age }}y</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Common diseases -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="ptitle-icon">🩺</span>Top Diagnoses</div>
+      </div>
+      <div class="panel-body-flush">
+        {% for i, row in common_diseases %}
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid #f1f5f9;">
+          <div style="width:20px;height:20px;border-radius:50%;background:#e8f3fb;color:#1a6fa8;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">{{ i+1 }}</div>
+          <div style="flex:1;font-size:13px;color:#334155;">{{ row.disease }}</div>
+          <div class="badge badge-blue">{{ row.count }}</div>
+        </div>
+        {% else %}
+        <div class="text-muted text-sm text-center" style="padding:16px;">No diagnoses yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

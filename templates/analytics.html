@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Analytics{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Reports &amp; Analytics</h1>
+    <div class="breadcrumb">🏥 CliniCore &rsaquo; Analytics</div>
+  </div>
+</div>
+
+<!-- Summary stats -->
+<div class="stats-row" style="margin-bottom:20px;">
+  <div class="stat-card">
+    <div class="stat-icon blue">👥</div>
+    <div class="stat-body">
+      <div class="stat-value">{{ stats.patients }}</div>
+      <div class="stat-label">Total Patients</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon teal">🗓️</div>
+    <div class="stat-body">
+      <div class="stat-value">{{ stats.visits }}</div>
+      <div class="stat-label">Total Visits</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green">🎂</div>
+    <div class="stat-body">
+      <div class="stat-value">{{ stats.avg_age }}</div>
+      <div class="stat-label">Average Age</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon amber">🩺</div>
+    <div class="stat-body">
+      <div class="stat-value">{{ stats.diagnoses }}</div>
+      <div class="stat-label">Diagnoses</div>
+    </div>
+  </div>
+</div>
+
+<div class="layout-two-col">
+  <!-- Disease burden -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="ptitle-icon">🩺</span>Disease Burden</div>
+      <span class="text-xs text-muted">by diagnosis count</span>
+    </div>
+    <div class="panel-body">
+      {% for d in top_diseases %}
+      {% set pct = ((d.count / stats.diagnoses) * 100)|int if stats.diagnoses > 0 else 0 %}
+      <div style="margin-bottom:14px;">
+        <div class="flex-between mb-4">
+          <span style="font-size:13px;font-weight:500;color:var(--gray-800);">{{ d.disease }}</span>
+          <span style="font-size:13px;font-weight:700;color:var(--gray-900);">{{ d.count }}
+            <span class="text-muted text-xs">({{ pct }}%)</span>
+          </span>
+        </div>
+        <div style="background:#e2e8f0;border-radius:3px;height:7px;overflow:hidden;">
+          <div style="height:100%;background:var(--blue);border-radius:3px;width:{{ pct }}%;transition:width .6s;"></div>
+        </div>
+      </div>
+      {% else %}
+      <div class="text-muted text-sm">No diagnoses recorded.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div>
+    <!-- Gender distribution -->
+    <div class="panel mb-16">
+      <div class="panel-header">
+        <div class="panel-title"><span class="ptitle-icon">📊</span>Gender Distribution</div>
+      </div>
+      <div class="panel-body">
+        {% for g in gender_dist %}
+        {% set pct = ((g.count / stats.patients) * 100)|int if stats.patients > 0 else 0 %}
+        <div style="margin-bottom:14px;">
+          <div class="flex-between mb-4">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:14px;">{{ '♂' if g.gender == 'Male' else '♀' }}</span>
+              <span style="font-size:13px;font-weight:500;">{{ g.gender }}</span>
+            </div>
+            <span style="font-size:13px;font-weight:700;">{{ g.count }} <span class="text-muted text-xs">({{ pct }}%)</span></span>
+          </div>
+          <div style="background:#e2e8f0;border-radius:3px;height:7px;overflow:hidden;">
+            <div style="height:100%;background:{{ '#1a6fa8' if g.gender == 'Male' else '#be185d' }};border-radius:3px;width:{{ pct }}%;"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Age distribution -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="ptitle-icon">🎂</span>Age Groups</div>
+      </div>
+      <div class="panel-body">
+        {% for ag in age_groups %}
+        {% set pct = ((ag.count / stats.patients) * 100)|int if stats.patients > 0 else 0 %}
+        <div style="margin-bottom:12px;">
+          <div class="flex-between mb-4">
+            <span style="font-size:13px;font-weight:500;">{{ ag.group }}</span>
+            <span style="font-size:13px;font-weight:700;">{{ ag.count }} <span class="text-muted text-xs">({{ pct }}%)</span></span>
+          </div>
+          <div style="background:#e2e8f0;border-radius:3px;height:7px;overflow:hidden;">
+            <div style="height:100%;background:var(--teal);border-radius:3px;width:{{ pct }}%;"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Most prescribed drugs -->
+<div class="panel mt-16">
+  <div class="panel-header">
+    <div class="panel-title"><span class="ptitle-icon">💊</span>Most Prescribed Medications</div>
+  </div>
+  <div class="panel-body-flush">
+    <table class="data-table">
+      <thead>
+        <tr><th>#</th><th>Drug</th><th>Prescriptions</th><th>Frequency</th></tr>
+      </thead>
+      <tbody>
+        {% for i, m in top_meds %}
+        <tr>
+          <td style="color:var(--gray-400);font-weight:600;">{{ i+1 }}</td>
+          <td><span style="font-weight:500;">{{ m.drug }}</span></td>
+          <td>{{ m.count }}</td>
+          <td>
+            {% set pct = ((m.count / stats.meds) * 100)|int if stats.meds > 0 else 0 %}
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="flex:1;background:#e2e8f0;border-radius:3px;height:6px;overflow:hidden;min-width:80px;">
+                <div style="height:100%;background:var(--green);border-radius:3px;width:{{ pct }}%;"></div>
+              </div>
+              <span class="text-xs text-muted">{{ pct }}%</span>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="text-muted text-sm text-center" style="padding:20px;">No medications yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

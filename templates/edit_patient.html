@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Edit Patient{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Edit Patient Record</h1>
+    <div class="breadcrumb">🏥 CliniCore &rsaquo; <a href="/patients">Patients</a> &rsaquo; Edit #P{{ '%04d' % patient.patient_id }}</div>
+  </div>
+</div>
+
+<div style="max-width:680px;">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <div class="patient-avatar {{ 'pa-female' if patient.gender == 'Female' else 'pa-male' }}" style="width:24px;height:24px;font-size:10px;">
+          {{ patient.name[0]|upper }}
+        </div>
+        {{ patient.name }} &nbsp;<span style="color:#94a3b8;font-weight:400;font-size:12px;">#P{{ '%04d' % patient.patient_id }}</span>
+      </div>
+    </div>
+    <div class="panel-body">
+      <form method="POST" action="/edit_patient/{{ patient.patient_id }}">
+        <div class="form-grid" style="margin-bottom:16px;">
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label" for="name">Full Name</label>
+            <input class="form-control" type="text" id="name" name="name"
+                   value="{{ patient.name }}" required maxlength="100">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="age">Age (years)</label>
+            <input class="form-control" type="number" id="age" name="age"
+                   value="{{ patient.age }}" required min="1" max="150">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="gender">Gender</label>
+            <select class="form-control" id="gender" name="gender">
+              <option value="Male"   {% if patient.gender == 'Male' %}selected{% endif %}>Male</option>
+              <option value="Female" {% if patient.gender == 'Female' %}selected{% endif %}>Female</option>
+              <option value="Other"  {% if patient.gender == 'Other' %}selected{% endif %}>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="contact">Contact Number</label>
+            <input class="form-control" type="text" id="contact" name="contact"
+                   value="{{ patient.contact }}" required maxlength="15">
+          </div>
+        </div>
+        <div class="form-actions">
+          <a href="/patients" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

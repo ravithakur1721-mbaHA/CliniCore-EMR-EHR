@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Register Patient{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Register New Patient</h1>
+    <div class="breadcrumb">🏥 CliniCore &rsaquo; <a href="/patients">Patients</a> &rsaquo; Register</div>
+  </div>
+</div>
+
+<div style="max-width:680px;">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="ptitle-icon">➕</span>Patient Demographics</div>
+    </div>
+    <div class="panel-body">
+      {% if error %}
+      <div class="alert alert-error">❌ {{ error }}</div>
+      {% endif %}
+
+      <form method="POST" action="/patients/add" id="add-patient-form">
+        <div class="form-grid" style="margin-bottom:16px;">
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label" for="name">Full Name <span style="color:#b91c1c">*</span></label>
+            <input class="form-control" type="text" id="name" name="name"
+                   placeholder="e.g. Ramesh Kumar" required maxlength="100"
+                   value="{{ form.name or '' }}">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="age">Age (years) <span style="color:#b91c1c">*</span></label>
+            <input class="form-control" type="number" id="age" name="age"
+                   placeholder="e.g. 34" required min="1" max="150"
+                   value="{{ form.age or '' }}">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="gender">Gender <span style="color:#b91c1c">*</span></label>
+            <select class="form-control" id="gender" name="gender" required>
+              <option value="" disabled {% if not form.gender %}selected{% endif %}>Select gender…</option>
+              <option value="Male"   {% if form.gender == 'Male' %}selected{% endif %}>Male</option>
+              <option value="Female" {% if form.gender == 'Female' %}selected{% endif %}>Female</option>
+              <option value="Other"  {% if form.gender == 'Other' %}selected{% endif %}>Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="contact">Contact Number <span style="color:#b91c1c">*</span></label>
+            <input class="form-control" type="text" id="contact" name="contact"
+                   placeholder="e.g. 9876543210" required maxlength="15"
+                   value="{{ form.contact or '' }}">
+            <div class="form-hint">10-digit mobile number</div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <a href="/patients" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary" id="submit-btn">
+            ✅ Register Patient
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

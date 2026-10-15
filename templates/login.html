@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — CliniCore EHR</title>
+  <meta name="description" content="Sign in to CliniCore Electronic Health Record system.">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="login-shell">
+
+  <!-- LEFT PANEL -->
+  <div class="login-left">
+    <div class="login-branding">
+      <div class="login-logo">🏥</div>
+      <div class="login-brand-name">CliniCore EHR</div>
+      <div class="login-brand-sub">ELECTRONIC HEALTH RECORD SYSTEM</div>
+    </div>
+
+    <div style="margin-top:0;">
+      <div style="color:#94a3b8;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;font-weight:600;">Platform Features</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="width:28px;height:28px;background:rgba(36,132,197,.2);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;">📋</div>
+          <div>
+            <div style="color:#e2e8f0;font-size:13px;font-weight:500;">Patient Records</div>
+            <div style="color:#64748b;font-size:11.5px;margin-top:1px;">Complete clinical history &amp; documentation</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="width:28px;height:28px;background:rgba(18,133,138,.2);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;">🧪</div>
+          <div>
+            <div style="color:#e2e8f0;font-size:13px;font-weight:500;">Lab &amp; Diagnostics</div>
+            <div style="color:#64748b;font-size:11.5px;margin-top:1px;">Integrated lab results &amp; imaging</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="width:28px;height:28px;background:rgba(26,122,74,.2);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;">💊</div>
+          <div>
+            <div style="color:#e2e8f0;font-size:13px;font-weight:500;">Medication Management</div>
+            <div style="color:#64748b;font-size:11.5px;margin-top:1px;">Prescriptions, dosage &amp; drug tracking</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="width:28px;height:28px;background:rgba(196,92,10,.2);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;">📈</div>
+          <div>
+            <div style="color:#e2e8f0;font-size:13px;font-weight:500;">Analytics &amp; Reporting</div>
+            <div style="color:#64748b;font-size:11.5px;margin-top:1px;">Clinical insights &amp; population health data</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="login-tagline">
+      Secure, HIPAA-compliant electronic records management for clinical teams.
+      All access is logged and audited.
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="login-right">
+    <div class="login-form-box">
+      <h1 class="login-form-title">Welcome back</h1>
+      <p class="login-form-sub">Sign in to your CliniCore account to continue.</p>
+
+      {% if error %}
+      <div class="alert alert-error" style="margin-bottom:16px;">
+        <span>❌</span> {{ error }}
+      </div>
+      {% endif %}
+
+      <form method="POST" action="/login" id="login-form">
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label" for="username">Username</label>
+          <input
+            class="form-control"
+            type="text"
+            id="username"
+            name="username"
+            placeholder="Enter your username"
+            required
+            autocomplete="username"
+          >
+        </div>
+
+        <div class="form-group" style="margin-bottom:6px;">
+          <label class="form-label" for="password">Password</label>
+          <input
+            class="form-control"
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Enter your password"
+            required
+            autocomplete="current-password"
+          >
+        </div>
+
+        <div style="margin-bottom:20px;text-align:right;">
+          <span style="font-size:12px;color:#64748b;cursor:pointer;">Forgot password? Contact IT</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-full" style="justify-content:center;padding:10px;" id="login-btn">
+          Sign In to CliniCore
+        </button>
+      </form>
+
+      <div class="login-divider"></div>
+
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:12px 14px;">
+        <div style="font-size:11.5px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Demo Credentials</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="font-size:12px;color:#64748b;"><span style="font-weight:600;color:#334155;">Admin:</span> admin / admin123</div>
+          <div style="font-size:12px;color:#64748b;"><span style="font-weight:600;color:#334155;">Doctor:</span> doctor / doc123</div>
+        </div>
+      </div>
+
+      <div class="login-footer">
+        CliniCore EHR v2.0 &nbsp;·&nbsp; © 2025 CliniCore Health Systems
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

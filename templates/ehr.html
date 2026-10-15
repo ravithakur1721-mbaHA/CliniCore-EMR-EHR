@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Clinical Records{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Full Clinical Records</h1>
+    <div class="breadcrumb">🏥 CliniCore &rsaquo; Clinical Records</div>
+  </div>
+  <div class="page-header-right">
+    <span class="text-muted text-sm">{{ total_items }} integrated record{{ 's' if total_items != 1 else '' }}</span>
+  </div>
+</div>
+
+{% for r in records %}
+<div class="ehr-card">
+  <div class="ehr-card-header">
+    <div>
+      <div class="patient-fullname">{{ r.name }}</div>
+      <div class="patient-meta">
+        {{ r.gender }} · {{ r.age }} years · Visit on {{ r.visit_date }}
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span class="badge badge-blue" style="font-size:10.5px;">#V{{ '%04d' % r.visit_id if r.visit_id else '' }}</span>
+      <a href="/patient/{{ r.patient_id }}" class="btn btn-secondary btn-xs" style="border-color:rgba(255,255,255,.15);color:#e2e8f0;background:rgba(255,255,255,.06);">Full Chart</a>
+      {% if r.visit_id %}
+      <a href="/prescription/{{ r.visit_id }}" target="_blank" class="btn btn-secondary btn-xs" style="border-color:rgba(255,255,255,.15);color:#e2e8f0;background:rgba(255,255,255,.06);" title="Print Prescription">🖨️ Rx</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="ehr-card-body">
+    <div class="ehr-field">
+      <div class="ehr-field-label">Attending Doctor</div>
+      <div class="ehr-field-value">{{ r.doctor_name }}</div>
+    </div>
+    <div class="ehr-field">
+      <div class="ehr-field-label">Diagnosis</div>
+      <div class="ehr-field-value">
+        <span class="badge badge-amber">{{ r.disease_name }}</span>
+      </div>
+    </div>
+    <div class="ehr-field">
+      <div class="ehr-field-label">Lab Test</div>
+      <div class="ehr-field-value">{{ r.test_name }}</div>
+    </div>
+    <div class="ehr-field">
+      <div class="ehr-field-label">Lab Result</div>
+      <div class="ehr-field-value">
+        <span class="badge badge-teal" style="font-family:'JetBrains Mono',monospace;font-size:11px;">{{ r.result_value }}</span>
+      </div>
+    </div>
+    <div class="ehr-field">
+      <div class="ehr-field-label">Medication</div>
+      <div class="ehr-field-value">{{ r.drug_name }}</div>
+    </div>
+    <div class="ehr-field">
+      <div class="ehr-field-label">Dosage</div>
+      <div class="ehr-field-value">
+        <span class="badge badge-green">{{ r.dosage }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="panel">
+  <div class="panel-body">
+    <div class="empty-state">
+      <div class="es-icon">📋</div>
+      <div class="es-msg">No complete EHR records yet.</div>
+      <div class="es-sub">Records appear once a patient has a visit, diagnosis, lab result, and medication.</div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<!-- PAGINATION BAR -->
+{% if total_pages > 1 %}
+<div class="panel mt-16">
+  <div class="pagination-bar">
+    <div>
+      Showing {{ (page - 1) * per_page + 1 }} to {{ [page * per_page, total_items]|min }} of {{ total_items }} records
+    </div>
+    <div class="pagination-controls">
+      <a href="/ehr?page=1" class="page-link {% if page == 1 %}disabled{% endif %}">« First</a>
+      <a href="/ehr?page={{ page - 1 }}" class="page-link {% if page == 1 %}disabled{% endif %}">‹ Prev</a>
+
+      {% for p_num in page_range %}
+      <a href="/ehr?page={{ p_num }}" class="page-link {% if p_num == page %}active{% endif %}">{{ p_num }}</a>
+      {% endfor %}
+
+      <a href="/ehr?page={{ page + 1 }}" class="page-link {% if page == total_pages %}disabled{% endif %}">Next ›</a>
+      <a href="/ehr?page={{ total_pages }}" class="page-link {% if page == total_pages %}disabled{% endif %}">Last »</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

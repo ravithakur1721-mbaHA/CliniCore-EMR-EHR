@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Record Patient Visit{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Record Patient Visit</h1>
+    <div class="breadcrumb">🏥 CliniCore &rsaquo; <a href="/visits">Visits</a> &rsaquo; Add Visit Encounter</div>
+  </div>
+</div>
+
+<div class="form-card" style="max-width:720px;">
+  <div class="form-card-header">
+    <div class="fch-title">🗓️ Record New Visit Encounter</div>
+    <div class="fch-sub">Select registered patient, consultation date, and attending doctor.</div>
+  </div>
+
+  <form method="POST" action="/visits/add">
+    <div class="form-body">
+
+      <!-- Patient Selection with Instant Search Filter -->
+      <div class="form-group">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <label class="form-label" style="margin:0;">Select Patient <span class="req">*</span></label>
+          <a href="/patients/add" class="text-xs" style="color:var(--blue);font-weight:600;">+ Register New Patient</a>
+        </div>
+
+        <input 
+          type="text" 
+          id="patient-filter-input" 
+          class="form-control mb-8" 
+          placeholder="🔍 Type patient name, phone, or ID to quickly find…"
+          style="font-size:12.5px;padding:6px 12px;"
+          autocomplete="off"
+        >
+
+        <select class="form-control" id="patient_id" name="patient_id" required size="7" style="height:auto;font-size:13px;padding:6px;">
+          {% for p in patients %}
+          <option value="{{ p.patient_id }}" {% if default_pid and default_pid|int == p.patient_id %}selected{% endif %}>
+            #P{{ '%04d' % p.patient_id }} — {{ p.name }} ({{ p.age }}y, {{ p.gender }}) · 📞 {{ p.contact }}
+          </option>
+          {% endfor %}
+        </select>
+        <div class="text-xs text-muted mt-4" id="patient-count-hint">Showing all {{ patients|length }} registered patients. Newly registered patients are listed at the top.</div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Visit / Encounter Date <span class="req">*</span></label>
+          <input 
+            class="form-control" 
+            type="date" 
+            id="visit_date" 
+            name="visit_date" 
+            value="{{ today_date }}" 
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Attending Doctor <span class="req">*</span></label>
+          <input 
+            class="form-control" 
+            type="text" 
+            id="doctor_name" 
+            name="doctor_name"
+            value="{{ default_doctor }}"
+            placeholder="e.g. Dr. Rajesh Gupta" 
+            required 
+            maxlength="100"
+          >
+        </div>
+      </div>
+
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">✅ Record Visit Encounter</button>
+      <a href="/visits" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  // Instant real-time patient filter for the select dropdown
+  const filterInput = document.getElementById('patient-filter-input');
+  const selectBox = document.getElementById('patient_id');
+  const allOptions = Array.from(selectBox.options);
+  const hintText = document.getElementById('patient-count-hint');
+
+  filterInput.addEventListener('input', function() {
+    const val = this.value.toLowerCase().trim();
+    selectBox.innerHTML = '';
+    let matches = 0;
+
+    allOptions.forEach(opt => {
+      if (opt.text.toLowerCase().includes(val)) {
+        selectBox.appendChild(opt);
+        matches++;
+      }
+    });
+
+    if (matches > 0 && val.length > 0) {
+      selectBox.selectedIndex = 0;
+    }
+    hintText.textContent = `Found ${matches} matching patient(s).`;
+  });
+</script>
+{% endblock %}

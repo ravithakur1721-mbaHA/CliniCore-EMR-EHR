@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Visits{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Patient Visits</h1>
+    <div class="breadcrumb">🏥 CliniCore &rsaquo; Visits</div>
+  </div>
+  <div class="page-header-right">
+    {% if can('visits.add') %}
+    <a href="/visits/add" class="btn btn-primary btn-sm">+ Add Visit</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header" style="flex-wrap:wrap;gap:12px;">
+    <div class="panel-title">
+      <span class="ptitle-icon">🗓️</span>All Visits
+      <span class="badge badge-gray" style="margin-left:4px;">{{ total_items }} total</span>
+    </div>
+
+    <!-- Search / Filter -->
+    <form method="GET" action="/visits" style="display:flex;gap:8px;align-items:center;margin-left:auto;">
+      <input
+        type="text"
+        name="q"
+        value="{{ q or '' }}"
+        placeholder="🔍 Search patient, doctor…"
+        class="form-control"
+        style="width:220px;padding:5px 10px;font-size:12.5px;"
+      >
+      <button type="submit" class="btn btn-secondary btn-xs" style="padding:6px 12px;">Search</button>
+      {% if q %}
+      <a href="/visits" class="btn btn-secondary btn-xs" style="padding:6px 10px;">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="panel-body-flush">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width:75px;">Visit ID</th>
+          <th>Patient</th>
+          <th>Visit Date</th>
+          <th>Attending Doctor</th>
+          <th style="text-align:right;width:200px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in visits %}
+        <tr>
+          <td class="td-id">#V{{ '%04d' % v.visit_id }}</td>
+          <td>
+            <div class="patient-cell">
+              <div class="patient-avatar {{ 'pa-female' if v.gender == 'Female' else 'pa-male' }}">
+                {{ v.patient_name[0]|upper }}
+              </div>
+              <div>
+                <a href="/patient/{{ v.patient_id }}" class="patient-name">{{ v.patient_name }}</a>
+                <div class="patient-id-sub">#P{{ '%04d' % v.patient_id }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;">{{ v.visit_date }}</span>
+          </td>
+          <td>{{ v.doctor_name }}</td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex;gap:4px;">
+              <a href="/patient/{{ v.patient_id }}" class="btn btn-secondary btn-xs">📋 Chart</a>
+              <a href="/prescription/{{ v.visit_id }}" target="_blank" class="btn btn-secondary btn-xs" title="Print Prescription">🖨️ Rx</a>
+              <a href="/bill/visit/{{ v.visit_id }}" target="_blank" class="btn btn-secondary btn-xs" title="Hospital Bill">🧾 Bill</a>
+              <a href="/prescription/whatsapp/{{ v.visit_id }}" target="_blank" class="btn btn-secondary btn-xs" title="Send WhatsApp Rx & Bill" style="color:#15803d;font-weight:600;">💬 WA</a>
+              {% if can('follow_ups.add') %}
+              <a href="/follow_ups/add?patient_id={{ v.patient_id }}&visit_id={{ v.visit_id }}" class="btn btn-secondary btn-xs" title="Schedule Follow-Up">📅 Review</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">
+          <div class="empty-state">
+            <div class="es-icon">🗓️</div>
+            <div class="es-msg">No visits recorded yet.</div>
+            <div class="es-sub"><a href="/visits/add">Record the first visit</a></div>
+          </div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGINATION BAR -->
+  {% if total_pages > 1 %}
+  <div class="pagination-bar">
+    <div>
+      Showing {{ (page - 1) * per_page + 1 }} to {{ [page * per_page, total_items]|min }} of {{ total_items }} visits
+    </div>
+    <div class="pagination-controls">
+      <a href="/visits?page=1{% if q %}&q={{ q }}{% endif %}" class="page-link {% if page == 1 %}disabled{% endif %}">« First</a>
+      <a href="/visits?page={{ page - 1 }}{% if q %}&q={{ q }}{% endif %}" class="page-link {% if page == 1 %}disabled{% endif %}">‹ Prev</a>
+
+      {% for p_num in page_range %}
+      <a href="/visits?page={{ p_num }}{% if q %}&q={{ q }}{% endif %}" class="page-link {% if p_num == page %}active{% endif %}">{{ p_num }}</a>
+      {% endfor %}
+
+      <a href="/visits?page={{ page + 1 }}{% if q %}&q={{ q }}{% endif %}" class="page-link {% if page == total_pages %}disabled{% endif %}">Next ›</a>
+      <a href="/visits?page={{ total_pages }}{% if q %}&q={{ q }}{% endif %}" class="page-link {% if page == total_pages %}disabled{% endif %}">Last »</a>
+    </div>
+  </div>
+  {% else %}
+  <div class="panel-footer">
+    <span>{{ total_items }} visit{{ 's' if total_items != 1 else '' }} total</span>
+    {% if can('visits.add') %}
+    <a href="/visits/add" class="btn btn-primary btn-xs">+ Add Visit</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

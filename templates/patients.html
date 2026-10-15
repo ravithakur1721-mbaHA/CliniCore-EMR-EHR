@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Patients{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Patient Registry</h1>
+    <div class="breadcrumb">🏥 CliniCore &rsaquo; Patients</div>
+  </div>
+  <div class="page-header-right">
+    {% if can('patients.add') %}
+    <a href="/patients/add" class="btn btn-primary btn-sm">+ Register Patient</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header" style="flex-wrap:wrap;gap:12px;">
+    <div class="panel-title">
+      <span class="ptitle-icon">👥</span>All Patients
+      <span class="badge badge-gray" style="margin-left:4px;">{{ total_items }} total</span>
+    </div>
+
+    <!-- Server search bar -->
+    <form method="GET" action="/patients" style="display:flex;gap:8px;align-items:center;margin-left:auto;">
+      <input
+        type="text"
+        name="q"
+        id="patient-search"
+        class="form-control"
+        style="width:240px;padding:5px 10px;font-size:12.5px;"
+        placeholder="🔍 Search name, contact, ID…"
+        value="{{ q or '' }}"
+      >
+      <button type="submit" class="btn btn-secondary btn-xs" style="padding:6px 12px;">Search</button>
+      {% if q %}
+      <a href="/patients" class="btn btn-secondary btn-xs" style="padding:6px 10px;">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="panel-body-flush">
+    <table class="data-table" id="patients-table">
+      <thead>
+        <tr>
+          <th style="width:75px;">ID</th>
+          <th>Patient</th>
+          <th>Age</th>
+          <th>Gender</th>
+          <th>Contact</th>
+          <th style="width:230px;text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in patients %}
+        <tr class="patient-row">
+          <td class="td-id">#P{{ '%04d' % p.patient_id }}</td>
+          <td>
+            <div class="patient-cell">
+              <div class="patient-avatar {{ 'pa-female' if p.gender == 'Female' else 'pa-male' }}">
+                {{ p.name[0]|upper }}
+              </div>
+              <div>
+                <a href="/patient/{{ p.patient_id }}" class="patient-name">{{ p.name }}</a>
+              </div>
+            </div>
+          </td>
+          <td>{{ p.age }} yrs</td>
+          <td>
+            <span class="badge {{ 'badge-blue' if p.gender == 'Male' else 'badge-amber' }}">
+              {{ '♂' if p.gender == 'Male' else '♀' }} {{ p.gender }}
+            </span>
+          </td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">{{ p.contact }}</td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex;gap:6px;">
+              <a href="/patient/{{ p.patient_id }}" class="btn btn-secondary btn-xs">📋 Chart</a>
+              {% if can('follow_ups.add') %}
+              <a href="/follow_ups/add?patient_id={{ p.patient_id }}" class="btn btn-secondary btn-xs" title="Schedule Follow-Up">📅 Review</a>
+              {% endif %}
+              {% if can('patients.edit') %}
+              <a href="/edit_patient/{{ p.patient_id }}" class="btn btn-secondary btn-xs">✏️ Edit</a>
+              {% endif %}
+              {% if can('patients.delete') %}
+              <a href="/delete_patient/{{ p.patient_id }}"
+                 class="btn btn-danger btn-xs"
+                 onclick="return confirm('Delete patient {{ p.name }}? This cannot be undone.')">🗑️</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6">
+            <div class="empty-state">
+              <div class="es-icon">👥</div>
+              <div class="es-msg">No patients registered yet.</div>
+              <div class="es-sub"><a href="/patients/add">Register the first patient</a></div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGINATION BAR -->
+  {% if total_pages > 1 %}
+  <div class="pagination-bar">
+    <div>
+      Showing {{ (page - 1) * per_page + 1 }} to {{ [page * per_page, total_items]|min }} of {{ total_items }} patients
+    </div>
+    <div class="pagination-controls">
+      <a href="/patients?page=1{% if q %}&q={{ q }}{% endif %}" class="page-link {% if page == 1 %}disabled{% endif %}">« First</a>
+      <a href="/patients?page={{ page - 1 }}{% if q %}&q={{ q }}{% endif %}" class="page-link {% if page == 1 %}disabled{% endif %}">‹ Prev</a>
+
+      {% for p_num in page_range %}
+      <a href="/patients?page={{ p_num }}{% if q %}&q={{ q }}{% endif %}" class="page-link {% if p_num == page %}active{% endif %}">{{ p_num }}</a>
+      {% endfor %}
+
+      <a href="/patients?page={{ page + 1 }}{% if q %}&q={{ q }}{% endif %}" class="page-link {% if page == total_pages %}disabled{% endif %}">Next ›</a>
+      <a href="/patients?page={{ total_pages }}{% if q %}&q={{ q }}{% endif %}" class="page-link {% if page == total_pages %}disabled{% endif %}">Last »</a>
+    </div>
+  </div>
+  {% else %}
+  <div class="panel-footer">
+    <span>Showing {{ total_items }} patient{{ 's' if total_items != 1 else '' }}</span>
+    {% if can('patients.add') %}
+    <a href="/patients/add" class="btn btn-primary btn-xs">+ Register Patient</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

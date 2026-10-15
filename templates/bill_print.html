@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital Bill / Tax Invoice — {{ invoice.invoice_number }} — {{ patient.name }}</title>
+  <meta name="description" content="Hospital Tax Invoice and Billing Receipt for {{ patient.name }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --navy:       #0d2137;
+      --navy-light: #152e4a;
+      --blue:       #1a6fa8;
+      --teal:       #12858a;
+      --gray-50:    #f8fafc;
+      --gray-100:   #f1f5f9;
+      --gray-200:   #e2e8f0;
+      --gray-400:   #94a3b8;
+      --gray-600:   #475569;
+      --gray-800:   #1e293b;
+      --gray-900:   #0f172a;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      background: var(--gray-100);
+      color: var(--gray-800);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .screen-controls {
+      background: var(--navy);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .screen-controls .brand {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      border: 1px solid transparent;
+    }
+    .btn-white { background: #fff; color: var(--navy); }
+    .btn-blue  { background: var(--blue); color: #fff; }
+    .btn-whatsapp { background: #25d366; color: #fff; font-weight: 600; }
+    .btn-whatsapp:hover { background: #1ebe57; }
+
+    .page-wrapper {
+      max-width: 820px;
+      margin: 28px auto;
+      padding: 0 16px 40px;
+    }
+
+    .bill-sheet {
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.08);
+      overflow: hidden;
+    }
+
+    .bill-header {
+      padding: 28px 32px;
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--blue);
+    }
+    .bill-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--navy);
+      letter-spacing: .3px;
+    }
+    .bill-sub {
+      font-size: 11.5px;
+      color: var(--gray-600);
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    .meta-strip {
+      background: var(--gray-50);
+      padding: 16px 32px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .meta-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--gray-400); letter-spacing: .5px; }
+    .meta-val { font-size: 13px; font-weight: 600; color: var(--gray-900); margin-top: 2px; }
+
+    .bill-body { padding: 28px 32px; }
+    .line-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+    }
+    .line-table th {
+      background: var(--navy);
+      color: #fff;
+      padding: 9px 14px;
+      font-size: 11.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      text-align: left;
+    }
+    .line-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--gray-200);
+      font-size: 13px;
+    }
+
+    .totals-box {
+      margin-left: auto;
+      width: 320px;
+      margin-top: 20px;
+      border: 1px solid var(--gray-200);
+      border-radius: 4px;
+      background: var(--gray-50);
+      overflow: hidden;
+    }
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--gray-200);
+      font-size: 12.5px;
+    }
+    .totals-row.grand {
+      background: var(--navy);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      border-bottom: none;
+    }
+
+    .bill-footer {
+      padding: 20px 32px;
+      border-top: 1px solid var(--gray-200);
+      background: var(--gray-50);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--gray-400);
+    }
+
+    @media print {
+      .screen-controls { display: none !important; }
+      body { background: #fff !important; }
+      .page-wrapper { margin: 0; padding: 0; max-width: 100%; }
+      .bill-sheet { border: none; box-shadow: none; border-radius: 0; }
+      .line-table th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .totals-row.grand { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen controls -->
+  <div class="screen-controls">
+    <div class="brand">
+      <span>🏥 CliniCore Hospital Billing System</span>
+      <span style="opacity:.6;">· Invoice #{{ invoice.invoice_number }}</span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <a href="{{ whatsapp_link }}" target="_blank" class="btn btn-whatsapp" title="Send directly to patient's registered phone {{ patient.contact }}">
+        💬 Send via WhatsApp ({{ patient.contact }})
+      </a>
+      <button onclick="window.print()" class="btn btn-white">🖨️ Print / Save PDF</button>
+      <a href="/patient/{{ patient.patient_id }}" class="btn btn-blue">Back to Patient Chart</a>
+    </div>
+  </div>
+
+  <div class="page-wrapper">
+    <div class="bill-sheet">
+      <!-- HEADER -->
+      <div class="bill-header">
+        <div>
+          <div class="bill-title">CLINICORE GENERAL HOSPITAL</div>
+          <div class="bill-sub">
+            123 Medical Centre Road, Health District<br>
+            GSTIN: 27AABCC1234F1Z5 &nbsp;·&nbsp; CIN: U85110MH2020PTC123456<br>
+            📞 +91-1234-567890 &nbsp;·&nbsp; 🌐 clinicore.health
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;">Official Tax Invoice</div>
+          <div style="font-size:18px;font-weight:700;color:var(--navy);font-family:'JetBrains Mono',monospace;">{{ invoice.invoice_number }}</div>
+          <div style="font-size:12px;color:var(--gray-600);margin-top:4px;">Date: {{ invoice.invoice_date }}</div>
+          <div style="margin-top:6px;">
+            <span style="background:#dcfce7;color:#15803d;padding:3px 8px;border-radius:4px;font-weight:700;font-size:11px;border:1px solid #86efac;">
+              ✓ {{ invoice.payment_status }} ({{ invoice.payment_method }})
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PATIENT METADATA STRIP -->
+      <div class="meta-strip">
+        <div>
+          <div class="meta-label">Patient Name</div>
+          <div class="meta-val">{{ patient.name }}</div>
+        </div>
+        <div>
+          <div class="meta-label">Patient ID &amp; Age</div>
+          <div class="meta-val">#P{{ '%04d' % patient.patient_id }} · {{ patient.age }}y / {{ patient.gender }}</div>
+        </div>
+        <div>
+          <div class="meta-label">Attending Doctor</div>
+          <div class="meta-val">{{ visit.doctor_name }}</div>
+        </div>
+        <div>
+          <div class="meta-label">Contact / Phone</div>
+          <div class="meta-val" style="font-family:'JetBrains Mono',monospace;">{{ patient.contact }}</div>
+        </div>
+      </div>
+
+      <!-- BODY LINE ITEMS -->
+      <div class="bill-body">
+        <table class="line-table">
+          <thead>
+            <tr>
+              <th style="width:50px;">#</th>
+              <th>Service / Item Description</th>
+              <th style="width:140px;text-align:center;">Department</th>
+              <th style="width:120px;text-align:right;">Amount (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>
+                <strong>Physician Clinical Consultation</strong>
+                <div style="font-size:11.5px;color:var(--gray-600);">Attending Physician: {{ visit.doctor_name }} (Visit #V{{ '%04d' % visit.visit_id }})</div>
+              </td>
+              <td style="text-align:center;">OPD Consultation</td>
+              <td style="text-align:right;font-family:'JetBrains Mono',monospace;">₹{{ '%.2f' % invoice.consultation_fee }}</td>
+            </tr>
+
+            {% if invoice.pharmacy_fee > 0 %}
+            <tr>
+              <td>2</td>
+              <td>
+                <strong>Pharmacy Dispensing &amp; Prescribed Medication</strong>
+                <div style="font-size:11.5px;color:var(--gray-600);">Prescription Ref: RX-{{ '%06d' % visit.visit_id }}</div>
+              </td>
+              <td style="text-align:center;">Pharmacy</td>
+              <td style="text-align:right;font-family:'JetBrains Mono',monospace;">₹{{ '%.2f' % invoice.pharmacy_fee }}</td>
+            </tr>
+            {% endif %}
+
+            {% if invoice.lab_fee > 0 %}
+            <tr>
+              <td>3</td>
+              <td>
+                <strong>Diagnostic Laboratory Investigations</strong>
+                <div style="font-size:11.5px;color:var(--gray-600);">Clinical Pathology &amp; Biochemistry Tests</div>
+              </td>
+              <td style="text-align:center;">Pathology Lab</td>
+              <td style="text-align:right;font-family:'JetBrains Mono',monospace;">₹{{ '%.2f' % invoice.lab_fee }}</td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+
+        <!-- TOTALS -->
+        <div class="totals-box">
+          <div class="totals-row">
+            <span>Subtotal</span>
+            <span style="font-family:'JetBrains Mono',monospace;">₹{{ '%.2f' % (invoice.consultation_fee + invoice.pharmacy_fee + invoice.lab_fee) }}</span>
+          </div>
+          <div class="totals-row">
+            <span>Taxes (GST 5%)</span>
+            <span style="font-family:'JetBrains Mono',monospace;">₹{{ '%.2f' % invoice.tax_amount }}</span>
+          </div>
+          <div class="totals-row grand">
+            <span>Grand Total</span>
+            <span style="font-family:'JetBrains Mono',monospace;">₹{{ '%.2f' % invoice.total_amount }}</span>
+          </div>
+        </div>
+
+        <div style="margin-top:36px;display:flex;justify-content:space-between;align-items:flex-end;">
+          <div style="font-size:11px;color:var(--gray-600);line-height:1.6;">
+            <strong>Payment Terms:</strong><br>
+            • Payment confirmed via {{ invoice.payment_method }} on {{ invoice.invoice_date }}.<br>
+            • This is an official computer-generated receipt requiring no signature.
+          </div>
+          <div style="text-align:center;border-top:1px solid #cbd5e1;padding-top:6px;width:180px;">
+            <div style="font-size:11px;font-weight:600;color:var(--gray-800);">Accounts Department</div>
+            <div style="font-size:10px;color:var(--gray-400);">CliniCore General Hospital</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="bill-footer">
+        <div>CliniCore EHR · Financial Services Division</div>
+        <div>Generated: {{ now }} · Thank you for choosing CliniCore Hospital</div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

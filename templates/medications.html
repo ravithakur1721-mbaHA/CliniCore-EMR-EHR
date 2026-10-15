@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Medications{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Medications &amp; Prescriptions</h1>
+    <div class="breadcrumb">🏥 CliniCore &rsaquo; Medications</div>
+  </div>
+  <div class="page-header-right">
+    {% if can('medications.add') %}
+    <a href="/medications/add" class="btn btn-primary btn-sm">+ Prescribe</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header" style="flex-wrap:wrap;gap:12px;">
+    <div class="panel-title">
+      <span class="ptitle-icon">💊</span>All Prescriptions
+      <span class="badge badge-gray" style="margin-left:4px;">{{ total_items }} total</span>
+    </div>
+
+    <!-- Search -->
+    <form method="GET" action="/medications" style="display:flex;gap:8px;align-items:center;margin-left:auto;">
+      <input
+        type="text"
+        name="q"
+        value="{{ q or '' }}"
+        placeholder="🔍 Search drug, patient…"
+        class="form-control"
+        style="width:220px;padding:5px 10px;font-size:12.5px;"
+      >
+      <button type="submit" class="btn btn-secondary btn-xs" style="padding:6px 12px;">Search</button>
+      {% if q %}
+      <a href="/medications" class="btn btn-secondary btn-xs" style="padding:6px 10px;">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="panel-body-flush">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width:75px;">ID</th>
+          <th>Patient</th>
+          <th>Visit</th>
+          <th>Drug</th>
+          <th>Dosage</th>
+          <th style="text-align:right;width:120px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in meds %}
+        <tr>
+          <td class="td-id">#M{{ '%04d' % m.med_id }}</td>
+          <td>
+            <div class="patient-cell">
+              <div class="patient-avatar {{ 'pa-female' if m.gender == 'Female' else 'pa-male' }}">
+                {{ m.patient_name[0]|upper }}
+              </div>
+              <a href="/patient/{{ m.patient_id }}" class="patient-name">{{ m.patient_name }}</a>
+            </div>
+          </td>
+          <td class="td-id">#V{{ '%04d' % m.visit_id }}</td>
+          <td><span style="font-weight:600;color:var(--gray-800);">{{ m.drug_name }}</span></td>
+          <td>
+            <span class="badge badge-green">{{ m.dosage }}</span>
+          </td>
+          <td style="text-align:right;">
+            <a href="/prescription/{{ m.visit_id }}" target="_blank" class="btn btn-secondary btn-xs" title="Print Prescription">🖨️ Rx</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6">
+          <div class="empty-state">
+            <div class="es-icon">💊</div>
+            <div class="es-msg">No medications found.</div>
+            <div class="es-sub"><a href="/medications/add">Add prescription</a></div>
+          </div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGINATION BAR -->
+  {% if total_pages > 1 %}
+  <div class="pagination-bar">
+    <div>
+      Showing {{ (page - 1) * per_page + 1 }} to {{ [page * per_page, total_items]|min }} of {{ total_items }} prescriptions
+    </div>
+    <div class="pagination-controls">
+      <a href="/medications?page=1{% if q %}&q={{ q }}{% endif %}" class="page-link {% if page == 1 %}disabled{% endif %}">« First</a>
+      <a href="/medications?page={{ page - 1 }}{% if q %}&q={{ q }}{% endif %}" class="page-link {% if page == 1 %}disabled{% endif %}">‹ Prev</a>
+
+      {% for p_num in page_range %}
+      <a href="/medications?page={{ p_num }}{% if q %}&q={{ q }}{% endif %}" class="page-link {% if p_num == page %}active{% endif %}">{{ p_num }}</a>
+      {% endfor %}
+
+      <a href="/medications?page={{ page + 1 }}{% if q %}&q={{ q }}{% endif %}" class="page-link {% if page == total_pages %}disabled{% endif %}">Next ›</a>
+      <a href="/medications?page={{ total_pages }}{% if q %}&q={{ q }}{% endif %}" class="page-link {% if page == total_pages %}disabled{% endif %}">Last »</a>
+    </div>
+  </div>
+  {% else %}
+  <div class="panel-footer">
+    <span>{{ total_items }} prescription{{ 's' if total_items != 1 else '' }} total</span>
+    {% if can('medications.add') %}
+    <a href="/medications/add" class="btn btn-primary btn-xs">+ Prescribe</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

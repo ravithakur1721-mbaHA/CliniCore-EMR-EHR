@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Add Diagnosis{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Add Diagnosis</h1>
+    <div class="breadcrumb">🏥 CliniCore &rsaquo; <a href="/diagnoses">Diagnoses</a> &rsaquo; Add</div>
+  </div>
+</div>
+
+<div style="max-width:680px;">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="ptitle-icon">🩺</span>Diagnosis Entry</div>
+    </div>
+    <div class="panel-body">
+      <form method="POST" action="/diagnoses/add">
+        <div class="form-grid" style="margin-bottom:16px;">
+          <div class="form-group">
+            <label class="form-label" for="visit_id">Visit <span style="color:#b91c1c">*</span></label>
+            <select class="form-control" id="visit_id" name="visit_id" required>
+              <option value="" disabled selected>Select visit…</option>
+              {% for v in visits %}
+              <option value="{{ v.visit_id }}">
+                #V{{ '%04d' % v.visit_id }} — {{ v.patient_name }} ({{ v.visit_date }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="disease_name">Disease / Condition <span style="color:#b91c1c">*</span></label>
+            <input class="form-control" type="text" id="disease_name" name="disease_name"
+                   placeholder="e.g. Type 2 Diabetes" required maxlength="100">
+          </div>
+        </div>
+        <div class="form-actions">
+          <a href="/diagnoses" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary">✅ Add Diagnosis</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
