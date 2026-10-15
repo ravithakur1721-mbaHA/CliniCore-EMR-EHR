@@ -11,7 +11,10 @@ from whatsapp_service import (
 )
 
 app = Flask(__name__)
-app.secret_key = "clinicore_ehr_secret_2025"
+import os
+from dotenv import load_dotenv
+load_dotenv()
+app.secret_key = os.environ.get("SECRET_KEY", "clinicore_ehr_secret_2025")
 
 
 # ═══════════════════════════════════════════════════════════════

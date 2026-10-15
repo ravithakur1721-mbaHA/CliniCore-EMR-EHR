@@ -1,11 +1,16 @@
 import mysql.connector
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def get_connection():
     return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="ravi1804",   # keep your actual password
-        database="ehrs"
+        host=os.environ.get("MYSQL_HOST", "localhost"),
+        user=os.environ.get("MYSQL_USER", "root"),
+        password=os.environ.get("MYSQL_PASSWORD", ""),
+        database=os.environ.get("MYSQL_DATABASE", "ehrs"),
+        port=int(os.environ.get("MYSQL_PORT", 3306)),
     )
 
 def get_table_data(table_name):
