@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Prescription — {{ patient.name }} — {{ visit.visit_date }}</title>
   <meta name="description" content="Prescription for {{ patient.name }} issued on {{ visit.visit_date }} by {{ visit.doctor_name }}.">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="theme-color" content="#0d2137">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="stylesheet" href="/static/icons.css">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IM+Fell+DW+Pica&display=swap" rel="stylesheet">
@@ -456,20 +460,20 @@
   <!-- ── Screen-only top bar ───────────────────────────────────── -->
   <div class="screen-controls">
     <div class="brand">
-      <span>🏥</span>
+      <i class="ph ph-heartbeat" style="font-size:16px;"></i>
       <span>CliniCore EHR — Prescription Viewer</span>
     <div class="actions">
       {% if invoice %}
-      <a href="/bill/{{ invoice.invoice_id }}" class="btn btn-white">🧾 View Bill</a>
+      <a href="/bill/{{ invoice.invoice_id }}" class="btn btn-white">View Bill</a>
       {% endif %}
       {% if whatsapp_link %}
       <a href="{{ whatsapp_link }}" target="_blank" class="btn" style="background:#25d366;color:#fff;font-weight:600;" title="Send directly to patient's registered phone {{ patient.contact }}">
-        💬 Send via WhatsApp ({{ patient.contact }})
+        Send via WhatsApp ({{ patient.contact }})
       </a>
       {% endif %}
       <a href="/patient/{{ patient.patient_id }}" class="btn btn-white">← Back to Chart</a>
       <button onclick="window.print()" class="btn btn-blue" id="print-btn">
-        🖨️ Print / Save as PDF
+        Print / Save as PDF
       </button>
     </div>
   </div>
@@ -481,13 +485,13 @@
       <!-- LETTERHEAD -->
       <div class="rx-header">
         <div class="rx-logo-area">
-          <div class="rx-logo-icon">🏥</div>
+          <div class="rx-logo-icon"><i class="ph ph-heartbeat"></i></div>
           <div>
             <div class="rx-clinic-name">CliniCore General Hospital</div>
             <div class="rx-clinic-sub">EHR / EMR System · Prescription</div>
             <div class="rx-clinic-addr">
               123 Medical Centre Road, Health District<br>
-              📞 +91-1234-567890 &nbsp;·&nbsp; 🌐 clinicore.health
+              +91-1234-567890 &nbsp;·&nbsp; clinicore.health
             </div>
           </div>
         </div>
@@ -540,7 +544,7 @@
         <!-- DIAGNOSES -->
         {% if diagnoses %}
         <div class="rx-section">
-          <div class="rx-section-title">🩺 Diagnosis / Clinical Findings</div>
+          <div class="rx-section-title">Diagnosis / Clinical Findings</div>
           <div class="diagnosis-list">
             {% for d in diagnoses %}
             <span class="dx-tag">{{ d.disease_name }}</span>
@@ -551,7 +555,7 @@
 
         <!-- MEDICATIONS -->
         <div class="rx-section">
-          <div class="rx-section-title">💊 Prescribed Medications</div>
+          <div class="rx-section-title">Prescribed Medications</div>
           {% if medications %}
           <table class="rx-med-table">
             <thead>
@@ -603,7 +607,7 @@
         <!-- LAB RESULTS (if any) -->
         {% if labs %}
         <div class="rx-section">
-          <div class="rx-section-title">🧪 Laboratory Results</div>
+          <div class="rx-section-title">Laboratory Results</div>
           <div class="lab-grid">
             {% for l in labs %}
             <div class="lab-item">
@@ -617,7 +621,7 @@
 
         <!-- DOCTOR'S NOTES -->
         <div class="rx-section">
-          <div class="rx-section-title">📝 Doctor's Notes / Special Instructions</div>
+          <div class="rx-section-title">Doctor's Notes / Special Instructions</div>
           <div class="rx-notes-box">
             Take prescribed medications as directed. Return for follow-up if symptoms persist or worsen.
             Maintain a healthy diet and adequate fluid intake. Avoid self-medication.
@@ -655,7 +659,7 @@
             </div>
 
             <div class="rx-disclaimer">
-              ⚠️ This prescription is valid for 30 days from the date of issue.<br>
+              This prescription is valid for 30 days from the date of issue.<br>
               This document is computer-generated and does not require a physical seal<br>
               unless mandated by law. For pharmacy dispensing use only.
             </div>

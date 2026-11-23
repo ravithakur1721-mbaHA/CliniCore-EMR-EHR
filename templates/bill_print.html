@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hospital Bill / Tax Invoice — {{ invoice.invoice_number }} — {{ patient.name }}</title>
   <meta name="description" content="Hospital Tax Invoice and Billing Receipt for {{ patient.name }}">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="theme-color" content="#0d2137">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 
@@ -183,14 +186,14 @@
   <!-- Screen controls -->
   <div class="screen-controls">
     <div class="brand">
-      <span>🏥 CliniCore Hospital Billing System</span>
+      <span>CliniCore Hospital Billing System</span>
       <span style="opacity:.6;">· Invoice #{{ invoice.invoice_number }}</span>
     </div>
     <div style="display:flex;gap:8px;">
       <a href="{{ whatsapp_link }}" target="_blank" class="btn btn-whatsapp" title="Send directly to patient's registered phone {{ patient.contact }}">
-        💬 Send via WhatsApp ({{ patient.contact }})
+        Send via WhatsApp ({{ patient.contact }})
       </a>
-      <button onclick="window.print()" class="btn btn-white">🖨️ Print / Save PDF</button>
+      <button onclick="window.print()" class="btn btn-white">Print / Save PDF</button>
       <a href="/patient/{{ patient.patient_id }}" class="btn btn-blue">Back to Patient Chart</a>
     </div>
   </div>
@@ -204,7 +207,7 @@
           <div class="bill-sub">
             123 Medical Centre Road, Health District<br>
             GSTIN: 27AABCC1234F1Z5 &nbsp;·&nbsp; CIN: U85110MH2020PTC123456<br>
-            📞 +91-1234-567890 &nbsp;·&nbsp; 🌐 clinicore.health
+            +91-1234-567890 &nbsp;·&nbsp; clinicore.health
           </div>
         </div>
         <div style="text-align:right;">
@@ -213,7 +216,7 @@
           <div style="font-size:12px;color:var(--gray-600);margin-top:4px;">Date: {{ invoice.invoice_date }}</div>
           <div style="margin-top:6px;">
             <span style="background:#dcfce7;color:#15803d;padding:3px 8px;border-radius:4px;font-weight:700;font-size:11px;border:1px solid #86efac;">
-              ✓ {{ invoice.payment_status }} ({{ invoice.payment_method }})
+              {{ invoice.payment_status }} ({{ invoice.payment_method }})
             </span>
           </div>
         </div>

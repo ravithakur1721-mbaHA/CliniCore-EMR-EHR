@@ -5,7 +5,7 @@
 <div class="page-header">
   <div class="page-header-left">
     <h1>Medications &amp; Prescriptions</h1>
-    <div class="breadcrumb">🏥 CliniCore &rsaquo; Medications</div>
+    <div class="breadcrumb">CliniCore &rsaquo; Medications</div>
   </div>
   <div class="page-header-right">
     {% if can('medications.add') %}
@@ -17,7 +17,7 @@
 <div class="panel">
   <div class="panel-header" style="flex-wrap:wrap;gap:12px;">
     <div class="panel-title">
-      <span class="ptitle-icon">💊</span>All Prescriptions
+      <span class="ptitle-icon"><i class="ph ph-pill"></i></span>All Prescriptions
       <span class="badge badge-gray" style="margin-left:4px;">{{ total_items }} total</span>
     </div>
 
@@ -27,7 +27,7 @@
         type="text"
         name="q"
         value="{{ q or '' }}"
-        placeholder="🔍 Search drug, patient…"
+        placeholder="Search drug, patient…"
         class="form-control"
         style="width:220px;padding:5px 10px;font-size:12.5px;"
       >
@@ -68,13 +68,13 @@
             <span class="badge badge-green">{{ m.dosage }}</span>
           </td>
           <td style="text-align:right;">
-            <a href="/prescription/{{ m.visit_id }}" target="_blank" class="btn btn-secondary btn-xs" title="Print Prescription">🖨️ Rx</a>
+            <a href="/prescription/{{ m.visit_id }}" target="_blank" class="btn btn-secondary btn-xs" title="Print Prescription">Rx</a>
           </td>
         </tr>
         {% else %}
         <tr><td colspan="6">
           <div class="empty-state">
-            <div class="es-icon">💊</div>
+            <div class="es-icon"><i class="ph ph-pill" style="font-size:36px;color:#94a3b8;"></i></div>
             <div class="es-msg">No medications found.</div>
             <div class="es-sub"><a href="/medications/add">Add prescription</a></div>
           </div>

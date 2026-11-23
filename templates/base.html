@@ -4,32 +4,38 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}CliniCore EHR{% endblock %} — CliniCore</title>
-  <meta name="description" content="CliniCore Electronic Health Record system — enterprise-grade clinical records management.">
+  <meta name="description" content="CliniCore Electronic Health Record system.">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="theme-color" content="#0d2137">
+  <link rel="canonical" href="{{ request.base_url }}">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="manifest" href="/static/site.webmanifest">
   <link rel="stylesheet" href="/static/style.css">
-  <!-- Phosphor Icons (lightweight, clinical-grade) -->
-  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js"></script>
+  <link rel="stylesheet" href="/static/icons.css">
 </head>
 <body>
 
   <!-- TOP BAR -->
   <nav class="topbar">
     <div class="topbar-brand">
-      <div class="brand-icon">🏥</div>
+      <div class="brand-icon">
+        <img src="/static/logo.svg" alt="CliniCore" style="width:28px;height:28px;display:block;">
+      </div>
       <div>
-        <div style="font-size:15px;font-weight:700;color:#fff;letter-spacing:.3px;">CliniCore</div>
-        <span class="brand-sub">EHR &amp; EMR System</span>
+        <div style="font-size:15px;font-weight:600;color:#fff;">CliniCore</div>
+        <span class="brand-sub">EHR System</span>
       </div>
     </div>
 
     <div class="topbar-search">
-      <span class="search-icon">🔍</span>
+      <span class="search-icon"><i class="ph ph-magnifying-glass"></i></span>
       <input type="text" id="global-search" placeholder="Search patients, visits, diagnoses…" autocomplete="off">
     </div>
 
     <div class="topbar-right">
       {% if session.user %}
       <div class="topbar-badge">
-        <span>🏥</span>
+        <i class="ph ph-buildings" style="font-size:13px;"></i>
         <span>General Ward</span>
       </div>
       <div class="flex-center gap-8">
@@ -56,10 +62,10 @@
       <!-- Role badge -->
       <div style="padding:10px 14px 6px;">
         <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:5px;padding:7px 10px;display:flex;align-items:center;gap:7px;">
-          <div style="width:8px;height:8px;border-radius:50%;background:{{ '#ef4444' if session.role == 'Admin' else ('#2484c5' if session.role == 'Doctor' else '#12858a') }};flex-shrink:0;"></div>
+          <div style="width:7px;height:7px;border-radius:50%;background:{{ '#ef4444' if session.role == 'Admin' else ('#2484c5' if session.role == 'Doctor' else '#12858a') }};flex-shrink:0;"></div>
           <div>
             <div style="color:#e2e8f0;font-size:12px;font-weight:600;">{{ session.user }}</div>
-            <div style="color:#64748b;font-size:10.5px;">{{ session.role }}</div>
+            <div style="color:#64748b;font-size:11px;">{{ session.role }}</div>
           </div>
         </div>
       </div>
@@ -67,49 +73,49 @@
       <div class="sidebar-section">
         <div class="sidebar-label">Clinical</div>
         <a href="/" class="sidebar-item {% if request.path == '/' %}active{% endif %}">
-          <span class="si-icon">📊</span> Dashboard
+          <span class="si-icon"><i class="ph ph-squares-four"></i></span> Dashboard
         </a>
 
         {% if can('patients.view') %}
         <a href="/patients" class="sidebar-item {% if '/patients' in request.path or '/patient/' in request.path %}active{% endif %}">
-          <span class="si-icon">👥</span> Patients
+          <span class="si-icon"><i class="ph ph-users"></i></span> Patients
           <span class="si-badge">{{ patient_count if patient_count else '' }}</span>
         </a>
         {% endif %}
 
         {% if can('ehr.view') %}
         <a href="/ehr" class="sidebar-item {% if request.path == '/ehr' %}active{% endif %}">
-          <span class="si-icon">📋</span> Clinical Records
+          <span class="si-icon"><i class="ph ph-clipboard-text"></i></span> Clinical Records
         </a>
         {% endif %}
 
         {% if can('visits.view') %}
         <a href="/visits" class="sidebar-item {% if request.path == '/visits' %}active{% endif %}">
-          <span class="si-icon">🗓️</span> Visits
+          <span class="si-icon"><i class="ph ph-calendar"></i></span> Visits
         </a>
         {% endif %}
 
         {% if can('diagnoses.view') %}
         <a href="/diagnoses" class="sidebar-item {% if request.path == '/diagnoses' %}active{% endif %}">
-          <span class="si-icon">🩺</span> Diagnoses
+          <span class="si-icon"><i class="ph ph-stethoscope"></i></span> Diagnoses
         </a>
         {% endif %}
 
         {% if can('labs.view') %}
         <a href="/lab_results" class="sidebar-item {% if request.path == '/lab_results' %}active{% endif %}">
-          <span class="si-icon">🧪</span> Lab Results
+          <span class="si-icon"><i class="ph ph-flask"></i></span> Lab Results
         </a>
         {% endif %}
 
         {% if can('medications.view') %}
         <a href="/medications" class="sidebar-item {% if request.path == '/medications' %}active{% endif %}">
-          <span class="si-icon">💊</span> Medications
+          <span class="si-icon"><i class="ph ph-pill"></i></span> Medications
         </a>
         {% endif %}
 
         {% if can('follow_ups.view') %}
         <a href="/follow_ups" class="sidebar-item {% if '/follow_up' in request.path %}active{% endif %}">
-          <span class="si-icon">📅</span> Follow-Ups
+          <span class="si-icon"><i class="ph ph-clock-countdown"></i></span> Follow-Ups
           {% if overdue_count and overdue_count > 0 %}
           <span class="si-badge" style="background:#ef4444;color:#fff;">{{ overdue_count }}</span>
           {% endif %}
@@ -122,7 +128,7 @@
       <div class="sidebar-section">
         <div class="sidebar-label">Analytics</div>
         <a href="/analytics" class="sidebar-item {% if request.path == '/analytics' %}active{% endif %}">
-          <span class="si-icon">📈</span> Reports &amp; Analytics
+          <span class="si-icon"><i class="ph ph-chart-line-up"></i></span> Reports &amp; Analytics
         </a>
       </div>
       {% endif %}
@@ -132,15 +138,15 @@
       <div class="sidebar-section">
         <div class="sidebar-label">Administration</div>
         <a href="/admin/users" class="sidebar-item {% if '/admin' in request.path %}active{% endif %}">
-          <span class="si-icon">🔐</span> User Management
+          <span class="si-icon"><i class="ph ph-shield-check"></i></span> User Management
         </a>
       </div>
       {% endif %}
 
       <div class="sidebar-footer">
         <div class="sidebar-item text-sm" style="cursor:default;">
-          <span class="si-icon">🟢</span>
-          <span style="font-size:11.5px;color:#64748b;">System Operational</span>
+          <span class="si-icon"><i class="ph ph-circle" style="color:#22c55e;"></i></span>
+          <span style="font-size:11px;color:#64748b;">System operational</span>
         </div>
       </div>
     </aside>
@@ -148,10 +154,25 @@
 
     <!-- MAIN -->
     <main class="main-content">
+      {% if custom_error %}
+      <div class="panel" style="max-width:600px;margin:24px auto;">
+        <div class="panel-header">
+          <div class="panel-title"><i class="ph ph-shield-warning" style="color:#b91c1c;"></i> Notice</div>
+        </div>
+        <div class="panel-body">
+          <p style="font-size:13.5px;color:var(--gray-700);margin-bottom:16px;">{{ custom_error }}</p>
+          <a href="/" class="btn btn-primary btn-sm">Return to Dashboard</a>
+        </div>
+      </div>
+      {% endif %}
+
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% for category, msg in messages %}
           <div class="alert alert-{{ category if category in ['success','error','warning','info'] else 'info' }}">
-            <span>{{ '✅' if category == 'success' else ('❌' if category == 'error' else 'ℹ️') }}</span>
+            {% if category == 'success' %}<i class="ph ph-check-circle"></i>
+            {% elif category == 'error' %}<i class="ph ph-x-circle"></i>
+            {% elif category == 'warning' %}<i class="ph ph-warning"></i>
+            {% else %}<i class="ph ph-info"></i>{% endif %}
             {{ msg }}
           </div>
         {% endfor %}

@@ -5,17 +5,18 @@
 <div class="page-header">
   <div class="page-header-left">
     <h1>Schedule Follow-Up</h1>
-    <div class="breadcrumb">🏥 CliniCore &rsaquo; <a href="/follow_ups">Follow-Ups</a> &rsaquo; New Schedule</div>
+    <div class="breadcrumb">CliniCore &rsaquo; <a href="/follow_ups">Follow-Ups</a> &rsaquo; New Schedule</div>
   </div>
 </div>
 
 <div class="form-card" style="max-width:720px;">
   <div class="form-card-header">
-    <div class="fch-title">📅 New Patient Follow-Up Consultation</div>
+    <div class="fch-title">New Patient Follow-Up Consultation</div>
     <div class="fch-sub">Configure review date, priority, and clinical monitoring instructions.</div>
   </div>
 
   <form method="POST" action="/follow_ups/add">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-body">
 
       <div class="form-group">
@@ -28,7 +29,7 @@
           type="text" 
           id="fu-patient-filter" 
           class="form-control mb-8" 
-          placeholder="🔍 Type patient name, phone, or ID to quickly find…"
+          placeholder="Search by name, phone or ID…"
           style="font-size:12.5px;padding:6px 12px;"
           autocomplete="off"
         >
@@ -36,7 +37,7 @@
         <select name="patient_id" class="form-control" required id="patient_id" size="6" style="height:auto;font-size:13px;padding:6px;">
           {% for p in patients %}
           <option value="{{ p.patient_id }}" {% if selected_patient_id and selected_patient_id|int == p.patient_id %}selected{% endif %}>
-            #P{{ '%04d' % p.patient_id }} — {{ p.name }} ({{ p.age }}y, {{ p.gender }}) · 📞 {{ p.contact }}
+            #P{{ '%04d' % p.patient_id }} — {{ p.name }} ({{ p.age }}y, {{ p.gender }}) · {{ p.contact }}
           </option>
           {% endfor %}
         </select>
@@ -59,7 +60,7 @@
           <select name="priority" class="form-control" required>
             <option value="Normal">Normal — Standard Review</option>
             <option value="High">High — Close Observation</option>
-            <option value="Urgent">🚨 Urgent — Critical Review</option>
+            <option value="Urgent">Urgent — Critical Review</option>
           </select>
         </div>
       </div>

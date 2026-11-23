@@ -12,9 +12,10 @@ venv/
 env/
 ENV/
 
-# Environment Variables
+# Environment Variables & Secrets
 .env
 .env.*
+.secret_key
 
 # IDE & OS
 .DS_Store

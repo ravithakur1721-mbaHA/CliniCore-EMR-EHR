@@ -1,8 +1,23 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
-from database import get_connection
+import os
+import secrets
+import time
+import math
 from datetime import datetime, date, timedelta
 from functools import wraps
-import math
+
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    flash,
+    abort,
+    send_from_directory,
+)
+from werkzeug.security import generate_password_hash, check_password_hash
+from database import get_connection
 from whatsapp_service import (
     format_whatsapp_phone,
     build_whatsapp_link,
@@ -11,10 +26,137 @@ from whatsapp_service import (
 )
 
 app = Flask(__name__)
-import os
-from dotenv import load_dotenv
-load_dotenv()
-app.secret_key = os.environ.get("SECRET_KEY", "clinicore_ehr_secret_2025")
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+# ── Cryptographically Secure Secret Key ──────────────────────
+def _get_or_create_secret_key():
+    env_key = os.environ.get("FLASK_SECRET_KEY") or os.environ.get("SECRET_KEY")
+    if env_key:
+        return env_key
+    key_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".secret_key")
+    if os.path.exists(key_file):
+        try:
+            with open(key_file, "r", encoding="utf-8") as f:
+                k = f.read().strip()
+                if len(k) >= 32:
+                    return k
+        except Exception:
+            pass
+    new_key = secrets.token_hex(32)
+    try:
+        with open(key_file, "w", encoding="utf-8") as f:
+            f.write(new_key)
+    except Exception:
+        pass
+    return new_key
+
+app.secret_key = _get_or_create_secret_key()
+
+# ── Session & Cookie Security Configuration ─────────────────
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=False,  # Set to True when SSL/TLS termination is enabled
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=2),
+    MAX_CONTENT_LENGTH=2 * 1024 * 1024,  # Max 2MB request body to prevent DoS
+)
+
+# ── Rate Limiting (Brute-Force Attack Defense) ──────────────
+_LOGIN_ATTEMPTS = {}
+MAX_LOGIN_ATTEMPTS = 5
+LOGIN_LOCKOUT_SECONDS = 300  # 5 minutes
+
+def check_login_rate_limit(ip: str) -> bool:
+    now = time.time()
+    attempts = _LOGIN_ATTEMPTS.get(ip, [])
+    attempts = [t for t in attempts if now - t < LOGIN_LOCKOUT_SECONDS]
+    _LOGIN_ATTEMPTS[ip] = attempts
+    return len(attempts) >= MAX_LOGIN_ATTEMPTS
+
+def record_failed_login(ip: str):
+    now = time.time()
+    attempts = _LOGIN_ATTEMPTS.get(ip, [])
+    attempts.append(now)
+    _LOGIN_ATTEMPTS[ip] = attempts
+
+def clear_login_attempts(ip: str):
+    _LOGIN_ATTEMPTS.pop(ip, None)
+
+# ── CSRF Protection Middleware ──────────────────────────────
+def generate_csrf_token() -> str:
+    if "_csrf_token" not in session:
+        session["_csrf_token"] = secrets.token_hex(32)
+    return session["_csrf_token"]
+
+app.jinja_env.globals["csrf_token"] = generate_csrf_token
+
+@app.before_request
+def csrf_protect():
+    session.permanent = True
+    if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+        token = request.form.get("csrf_token") or request.headers.get("X-CSRF-Token")
+        expected = session.get("_csrf_token")
+        if not expected or not token or not secrets.compare_digest(str(token), str(expected)):
+            abort(403)
+
+def verify_action_csrf():
+    """Verify CSRF token for destructive or state-changing actions."""
+    token = request.args.get("csrf") or request.form.get("csrf_token")
+    expected = session.get("_csrf_token")
+    if not expected or not token or not secrets.compare_digest(str(token), str(expected)):
+        abort(403)
+
+# ── HTTP Security Headers (OWASP Top 10) ────────────────────
+@app.after_request
+def apply_security_headers(response):
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://unpkg.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com data:; "
+        "img-src 'self' data:; "
+        "connect-src 'self'; "
+        "frame-ancestors 'self';"
+    )
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    if "user" in session:
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+    return response
+
+# ── Safe Input Parsing Helper ───────────────────────────────
+def safe_int(value, default=1, min_val=1, max_val=1000000) -> int:
+    try:
+        val = int(value)
+        if val < min_val:
+            return min_val
+        if val > max_val:
+            return max_val
+        return val
+    except (ValueError, TypeError):
+        return default
+
+# ── Custom Error Handlers ───────────────────────────────────
+@app.errorhandler(403)
+def forbidden_error(e):
+    return render_template("base.html", custom_error="403 Forbidden: Request validation failed or access denied."), 403
+
+@app.errorhandler(404)
+def not_found_error(e):
+    return render_template("base.html", custom_error="404 Not Found: The requested resource does not exist."), 404
+
+@app.errorhandler(500)
+def internal_error(e):
+    return render_template("base.html", custom_error="500 Internal Error: An unexpected error occurred. Please contact the administrator."), 500
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -89,36 +231,48 @@ def login_required(fn):
 # ═══════════════════════════════════════════════════════════════
 
 def get_stats():
-    conn = get_connection()
-    cur = conn.cursor(dictionary=True)
-    stats = {}
-    cur.execute("SELECT COUNT(*) AS c FROM patients");    stats["patients"]  = cur.fetchone()["c"]
-    cur.execute("SELECT COUNT(*) AS c FROM visits");      stats["visits"]    = cur.fetchone()["c"]
-    cur.execute("SELECT COUNT(*) AS c FROM diagnoses");   stats["diagnoses"] = cur.fetchone()["c"]
-    cur.execute("SELECT COUNT(*) AS c FROM lab_results"); stats["labs"]      = cur.fetchone()["c"]
-    cur.execute("SELECT COUNT(*) AS c FROM medications"); stats["meds"]      = cur.fetchone()["c"]
-    cur.execute("SELECT COUNT(*) AS c FROM follow_ups");  stats["follow_ups"] = cur.fetchone()["c"]
-    cur.execute("SELECT COUNT(*) AS c FROM follow_ups WHERE status = 'Overdue'"); stats["overdue_follow_ups"] = cur.fetchone()["c"]
-    cur.execute("SELECT ROUND(AVG(age), 1) AS a FROM patients")
-    row = cur.fetchone(); stats["avg_age"] = row["a"] if row["a"] else "—"
-    cur.close(); conn.close()
+    stats = {
+        "patients": 0, "visits": 0, "diagnoses": 0, "labs": 0,
+        "meds": 0, "follow_ups": 0, "overdue_follow_ups": 0, "avg_age": "—"
+    }
+    try:
+        conn = get_connection()
+        cur = conn.cursor(dictionary=True)
+        cur.execute("SELECT COUNT(*) AS c FROM patients");    stats["patients"]  = cur.fetchone()["c"]
+        cur.execute("SELECT COUNT(*) AS c FROM visits");      stats["visits"]    = cur.fetchone()["c"]
+        cur.execute("SELECT COUNT(*) AS c FROM diagnoses");   stats["diagnoses"] = cur.fetchone()["c"]
+        cur.execute("SELECT COUNT(*) AS c FROM lab_results"); stats["labs"]      = cur.fetchone()["c"]
+        cur.execute("SELECT COUNT(*) AS c FROM medications"); stats["meds"]      = cur.fetchone()["c"]
+        cur.execute("SELECT COUNT(*) AS c FROM follow_ups");  stats["follow_ups"] = cur.fetchone()["c"]
+        cur.execute("SELECT COUNT(*) AS c FROM follow_ups WHERE status = 'Overdue'"); stats["overdue_follow_ups"] = cur.fetchone()["c"]
+        cur.execute("SELECT ROUND(AVG(age), 1) AS a FROM patients")
+        row = cur.fetchone(); stats["avg_age"] = row["a"] if row and row["a"] else "—"
+        cur.close(); conn.close()
+    except Exception:
+        pass
     return stats
 
 
 def get_patient_count():
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM patients")
-    n = cur.fetchone()[0]; cur.close(); conn.close()
-    return n
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM patients")
+        n = cur.fetchone()[0]; cur.close(); conn.close()
+        return n
+    except Exception:
+        return 0
 
 
 def get_overdue_follow_up_count():
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM follow_ups WHERE status = 'Overdue'")
-    n = cur.fetchone()[0]; cur.close(); conn.close()
-    return n
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM follow_ups WHERE status = 'Overdue'")
+        n = cur.fetchone()[0]; cur.close(); conn.close()
+        return n
+    except Exception:
+        return 0
 
 
 def paginate(total_items, page, per_page=25):
@@ -149,6 +303,20 @@ def inject_globals():
 
 
 # ═══════════════════════════════════════════════════════════════
+# SEO & Static Discovery
+# ═══════════════════════════════════════════════════════════════
+
+@app.route("/robots.txt")
+def robots_txt():
+    return send_from_directory(app.static_folder, "robots.txt", mimetype="text/plain")
+
+
+@app.route("/sitemap.xml")
+def sitemap_xml():
+    return send_from_directory(app.static_folder, "sitemap.xml", mimetype="application/xml")
+
+
+# ═══════════════════════════════════════════════════════════════
 # Auth
 # ═══════════════════════════════════════════════════════════════
 
@@ -158,23 +326,67 @@ def login():
         return redirect(url_for("index"))
 
     if request.method == "POST":
-        username = request.form["username"].strip()
-        password = request.form["password"]
+        client_ip = request.remote_addr or "127.0.0.1"
+        if check_login_rate_limit(client_ip):
+            return render_template(
+                "login.html",
+                error="Too many failed login attempts. Temporarily locked for 5 minutes."
+            )
 
-        conn = get_connection()
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+
+        if not username or not password:
+            record_failed_login(client_ip)
+            return render_template("login.html", error="Username and password are required.")
+
+        try:
+            conn = get_connection()
+        except Exception:
+            record_failed_login(client_ip)
+            return render_template("login.html", error="Database service temporarily unavailable. Please try again shortly."), 503
+
         cur = conn.cursor(dictionary=True)
         cur.execute(
-            "SELECT * FROM users WHERE username=%s AND password=%s AND is_active=1",
-            (username, password)
+            "SELECT * FROM users WHERE username=%s AND is_active=1",
+            (username,)
         )
-        user = cur.fetchone(); cur.close(); conn.close()
+        user = cur.fetchone()
+
+        authenticated = False
+        needs_hash_upgrade = False
 
         if user:
+            stored_pwd = user.get("password", "")
+            if stored_pwd.startswith(("scrypt:", "pbkdf2:")):
+                authenticated = check_password_hash(stored_pwd, password)
+            elif stored_pwd == password:
+                authenticated = True
+                needs_hash_upgrade = True
+
+        if authenticated:
+            clear_login_attempts(client_ip)
+            if needs_hash_upgrade:
+                try:
+                    new_hash = generate_password_hash(password)
+                    cur.execute("UPDATE users SET password=%s WHERE user_id=%s", (new_hash, user["user_id"]))
+                    conn.commit()
+                except Exception:
+                    pass
+            cur.close()
+            conn.close()
+
+            # Prevent session fixation attacks
+            session.clear()
             session["user"] = user["username"]
             session["role"] = user["role"]
-            flash(f"Welcome, {user['username']}! Signed in as {user['role']}.", "success")
+            generate_csrf_token()
+            flash(f"Signed in as {user['username']} ({user['role']}).", "success")
             return redirect(url_for("index"))
         else:
+            record_failed_login(client_ip)
+            cur.close()
+            conn.close()
             return render_template("login.html", error="Invalid credentials or account inactive.")
 
     return render_template("login.html")
@@ -183,6 +395,7 @@ def login():
 @app.route("/logout")
 def logout():
     session.clear()
+    flash("You have been signed out.", "info")
     return redirect(url_for("login"))
 
 
@@ -222,7 +435,7 @@ def index():
 @require_permission("patients.view")
 def patients():
     q = request.args.get("q", "").strip()
-    page = int(request.args.get("page", 1))
+    page = safe_int(request.args.get("page", 1))
     per_page = 25
 
     conn = get_connection()
@@ -345,6 +558,7 @@ def edit_patient(pid):
 @app.route("/delete_patient/<int:pid>")
 @require_permission("patients.delete")
 def delete_patient(pid):
+    verify_action_csrf()
     conn = get_connection()
     cur = conn.cursor(dictionary=True)
     cur.execute("SELECT name FROM patients WHERE patient_id=%s", (pid,))
@@ -365,7 +579,7 @@ def delete_patient(pid):
 @require_permission("visits.view")
 def visits():
     q = request.args.get("q", "").strip()
-    page = int(request.args.get("page", 1))
+    page = safe_int(request.args.get("page", 1))
     per_page = 25
 
     conn = get_connection()
@@ -459,7 +673,7 @@ def follow_ups():
     q = request.args.get("q", "").strip()
     status_filter = request.args.get("status", "All").strip()
     priority_filter = request.args.get("priority", "All").strip()
-    page = int(request.args.get("page", 1))
+    page = safe_int(request.args.get("page", 1))
     per_page = 25
 
     conn = get_connection()
@@ -569,6 +783,7 @@ def add_follow_up():
 @app.route("/follow_up/status/<int:fuid>")
 @require_permission("follow_ups.edit")
 def toggle_follow_up_status(fuid):
+    verify_action_csrf()
     new_status = request.args.get("new_status", "Completed")
     redirect_to = request.args.get("redirect", "list")
     if new_status not in ["Scheduled", "Completed", "Cancelled", "Overdue"]:
@@ -598,7 +813,7 @@ def toggle_follow_up_status(fuid):
 @require_permission("diagnoses.view")
 def diagnoses():
     q = request.args.get("q", "").strip()
-    page = int(request.args.get("page", 1))
+    page = safe_int(request.args.get("page", 1))
     per_page = 25
 
     conn = get_connection()
@@ -676,7 +891,7 @@ def add_diagnosis():
 @require_permission("labs.view")
 def lab_results():
     q = request.args.get("q", "").strip()
-    page = int(request.args.get("page", 1))
+    page = safe_int(request.args.get("page", 1))
     per_page = 25
 
     conn = get_connection()
@@ -758,7 +973,7 @@ def add_lab():
 @require_permission("medications.view")
 def medications():
     q = request.args.get("q", "").strip()
-    page = int(request.args.get("page", 1))
+    page = safe_int(request.args.get("page", 1))
     per_page = 25
 
     conn = get_connection()
@@ -839,7 +1054,7 @@ def add_medication():
 @app.route("/ehr")
 @require_permission("ehr.view")
 def ehr():
-    page = int(request.args.get("page", 1))
+    page = safe_int(request.args.get("page", 1))
     per_page = 20
 
     conn = get_connection()
@@ -940,12 +1155,16 @@ def admin_users():
 @app.route("/admin/users/add", methods=["POST"])
 @require_permission("admin.users")
 def admin_add_user():
-    username = request.form["username"].strip()
-    password = request.form["password"].strip()
-    role     = request.form["role"].strip()
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "").strip()
+    role     = request.form.get("role", "").strip()
 
     if not username or not password or not role:
         flash("All fields required.", "error")
+        return redirect(url_for("admin_users"))
+
+    if len(password) < 8:
+        flash("Password must be at least 8 characters long for security.", "error")
         return redirect(url_for("admin_users"))
 
     if role not in ROLE_PERMISSIONS:
@@ -955,14 +1174,15 @@ def admin_add_user():
     conn = get_connection()
     cur = conn.cursor()
     try:
+        hashed_password = generate_password_hash(password)
         cur.execute(
             "INSERT INTO users (username, password, role, is_active) VALUES (%s, %s, %s, 1)",
-            (username, password, role)
+            (username, hashed_password, role)
         )
         conn.commit()
         flash(f"User '{username}' created with role '{role}'.", "success")
-    except Exception as e:
-        flash(f"Error creating user: {e}", "error")
+    except Exception:
+        flash("Error creating user: username may already exist.", "error")
     finally:
         cur.close(); conn.close()
     return redirect(url_for("admin_users"))
@@ -971,6 +1191,7 @@ def admin_add_user():
 @app.route("/admin/users/toggle/<int:uid>")
 @require_permission("admin.users")
 def admin_toggle_user(uid):
+    verify_action_csrf()
     if uid == 1:
         flash("Cannot deactivate the primary admin account.", "error")
         return redirect(url_for("admin_users"))
@@ -991,6 +1212,7 @@ def admin_toggle_user(uid):
 @app.route("/admin/users/delete/<int:uid>")
 @require_permission("admin.users")
 def admin_delete_user(uid):
+    verify_action_csrf()
     if uid == 1:
         flash("Cannot delete the primary admin account.", "error")
         return redirect(url_for("admin_users"))

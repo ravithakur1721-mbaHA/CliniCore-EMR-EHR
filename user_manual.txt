@@ -1,0 +1,1313 @@
+================================================================================
+         CLINICORE EHR / EMR PORTAL — COMPLETE USER MANUAL
+         Version 1.0  |  CliniCore General Hospital
+         Generated: October 2026
+================================================================================
+
+TABLE OF CONTENTS
+──────────────────────────────────────────────────────────────────────────────
+  1.  Introduction & System Overview
+  2.  System Requirements & Getting Started
+  3.  User Roles & Permission System (RBAC)
+       3.1  Admin Role
+       3.2  Doctor Role
+       3.3  Nurse Role
+       3.4  Permission Reference Table
+  4.  Authentication — Login & Logout
+  5.  Dashboard (Home Screen)
+  6.  Module 1: Patient Management
+       6.1  Viewing the Patient List
+       6.2  Registering a New Patient
+       6.3  Editing Patient Demographics
+       6.4  Deleting a Patient
+       6.5  Patient Chart (Full Medical Record View)
+  7.  Module 2: Visit Management
+       7.1  Viewing the Visits Registry
+       7.2  Recording a New Visit
+       7.3  Auto-Invoice on Visit Creation
+  8.  Module 3: Diagnosis Management
+       8.1  Viewing All Diagnoses
+       8.2  Adding a New Diagnosis
+  9.  Module 4: Laboratory Results
+       9.1  Viewing Lab Results
+       9.2  Adding a Lab Result
+  10. Module 5: Medications & Prescriptions
+       10.1  Viewing Medications
+       10.2  Prescribing a Medication
+       10.3  Printing / Downloading a Prescription
+  11. Module 6: Follow-Up Care Tracking
+       11.1  Viewing Follow-Up List
+       11.2  Scheduling a Follow-Up
+       11.3  Follow-Up Status Lifecycle
+       11.4  Updating Follow-Up Status
+  12. Module 7: Billing & Invoicing
+       12.1  Auto-Generated Invoices
+       12.2  Viewing a Bill / Invoice
+       12.3  Invoice Fields & Fee Breakdown
+  13. Module 8: Full EHR Registry View
+  14. Module 9: Analytics & Reports
+       14.1  Gender Distribution
+       14.2  Top Diseases
+       14.3  Age Group Breakdown
+       14.4  Top Prescribed Medications
+       14.5  Summary Statistics
+  15. Module 10: Admin — User Management
+       15.1  Viewing All Users
+       15.2  Creating a New User
+       15.3  Activating / Deactivating a User
+       15.4  Deleting a User
+       15.5  Security Safeguards
+  16. WhatsApp Integration
+       16.1  Overview & How It Works
+       16.2  Prescription WhatsApp Message
+       16.3  Follow-Up Reminder WhatsApp Message
+       16.4  Sending WhatsApp from Prescription Page
+       16.5  Sending WhatsApp from Follow-Up List
+       16.6  Phone Number Handling & Country Code
+       16.7  Troubleshooting WhatsApp
+  17. Search & Pagination System
+  18. Notifications & Flash Messages
+  19. Database Schema Reference
+  20. Troubleshooting & FAQs
+  21. Glossary
+
+================================================================================
+1. INTRODUCTION & SYSTEM OVERVIEW
+================================================================================
+
+CliniCore EHR/EMR Portal is a web-based Electronic Health Records (EHR) and
+Electronic Medical Records (EMR) management system designed for hospitals and
+clinics. It is built with Python (Flask framework) and MySQL, and is accessed
+through any modern web browser.
+
+The system allows medical staff to:
+  * Register and manage patient demographics
+  * Record and track clinical visits
+  * Log diagnoses, laboratory results, and prescribed medications
+  * Schedule and track patient follow-up consultations
+  * Generate and print professional prescriptions (PDF-ready)
+  * Issue billing invoices automatically with each visit
+  * Send digital prescriptions and appointment reminders via WhatsApp
+  * Analyse population health data through the Analytics module
+  * Manage system users with Role-Based Access Control (RBAC)
+
+The portal uses three user roles: Admin, Doctor, and Nurse — each with a
+precisely defined set of permissions to enforce clinical data governance.
+
+Application URL (default):  http://127.0.0.1:5000
+                            OR  http://localhost:5000
+
+================================================================================
+2. SYSTEM REQUIREMENTS & GETTING STARTED
+================================================================================
+
+REQUIREMENTS
+  * Python 3.9 or higher
+  * MySQL 8.0 or higher (database: 'ehrs')
+  * Modern web browser: Chrome, Firefox, Edge, Safari
+  * Network access to the server running app.py
+
+STARTING THE APPLICATION
+  1. Open a terminal in the project directory.
+  2. Activate the virtual environment:
+       source .venv/bin/activate         (macOS/Linux)
+       .venv\Scripts\activate            (Windows)
+  3. Start the Flask server:
+       python3 app.py
+  4. The terminal will display:
+         * Running on http://127.0.0.1:5000
+  5. Open a browser and go to:  http://127.0.0.1:5000/login
+
+DATABASE SETUP (first time only)
+  1. Open MySQL and run the SQL script:
+       source /path/to/ehr_project.sql
+  2. This creates the 'ehrs' database with all required tables and seed data.
+  3. Default admin credentials are created:
+       Username: admin    Password: admin123
+       Username: doctor   Password: doc123
+
+================================================================================
+3. USER ROLES & PERMISSION SYSTEM (RBAC)
+================================================================================
+
+CliniCore uses Role-Based Access Control (RBAC). Every logged-in user is
+assigned exactly one role: Admin, Doctor, or Nurse. Each role has a precisely
+defined set of permissions. The system automatically blocks unauthorized
+access and displays an "Access Denied" error if a user tries an action they
+are not permitted to perform.
+
+3.1  ADMIN ROLE
+────────────────────────────────────────────────────────────────────────────────
+The Admin has the highest level of access across the entire system.
+
+Permissions:
+  * patients.view, patients.add, patients.edit, patients.delete
+  * visits.view, visits.add
+  * diagnoses.view, diagnoses.add
+  * labs.view, labs.add
+  * medications.view, medications.add
+  * follow_ups.view, follow_ups.add, follow_ups.edit, follow_ups.delete
+  * ehr.view
+  * analytics.view
+  * admin.users   <-- Exclusive to Admin: full user management
+
+Use case: Hospital administrators, IT staff, department heads who need full
+control over data and system users.
+
+3.2  DOCTOR ROLE
+────────────────────────────────────────────────────────────────────────────────
+The Doctor has clinical data entry and viewing rights, but cannot delete
+patients or manage users.
+
+Permissions:
+  * patients.view, patients.add, patients.edit
+  * visits.view, visits.add
+  * diagnoses.view, diagnoses.add
+  * labs.view, labs.add
+  * medications.view, medications.add
+  * follow_ups.view, follow_ups.add, follow_ups.edit
+  * ehr.view
+  * analytics.view
+
+Use case: Attending physicians, consultants, resident doctors. When logged in
+as Doctor, the visit form auto-fills the doctor name with the logged-in username
+for convenience.
+
+Note: Doctors CANNOT delete patients and CANNOT manage system users.
+
+3.3  NURSE ROLE
+────────────────────────────────────────────────────────────────────────────────
+The Nurse has read-only access to most modules, with limited data entry for
+lab results and the ability to update follow-up statuses.
+
+Permissions:
+  * patients.view
+  * visits.view
+  * diagnoses.view
+  * labs.view, labs.add        <-- Nurses CAN add lab results
+  * medications.view
+  * follow_ups.view, follow_ups.edit  <-- Nurses CAN update follow-up status
+
+Note: Nurses CANNOT add new patients, record visits, add diagnoses, prescribe
+medications, or manage users.
+
+3.4  PERMISSION REFERENCE TABLE
+────────────────────────────────────────────────────────────────────────────────
+
+  Permission            Admin    Doctor    Nurse
+  -------------------------------------------------
+  patients.view           YES      YES       YES
+  patients.add            YES      YES       NO
+  patients.edit           YES      YES       NO
+  patients.delete         YES      NO        NO
+  visits.view             YES      YES       YES
+  visits.add              YES      YES       NO
+  diagnoses.view          YES      YES       YES
+  diagnoses.add           YES      YES       NO
+  labs.view               YES      YES       YES
+  labs.add                YES      YES       YES
+  medications.view        YES      YES       YES
+  medications.add         YES      YES       NO
+  follow_ups.view         YES      YES       YES
+  follow_ups.add          YES      YES       NO
+  follow_ups.edit         YES      YES       YES
+  follow_ups.delete       YES      NO        NO
+  ehr.view                YES      YES       NO
+  analytics.view          YES      YES       NO
+  admin.users             YES      NO        NO
+
+================================================================================
+4. AUTHENTICATION — LOGIN & LOGOUT
+================================================================================
+
+LOGIN
+  1. Navigate to http://127.0.0.1:5000/login in your browser.
+  2. Enter your assigned username and password.
+  3. Click "Sign In".
+  4. On success, you are redirected to the Dashboard.
+  5. A welcome banner confirms your role: e.g., "Welcome, admin! Signed in as Admin."
+
+LOGIN FAILURE
+  * If credentials are wrong or the account is deactivated, you see:
+    "Invalid credentials or account inactive."
+  * Contact your Admin to verify your account status.
+
+LOGOUT
+  * Click the "Logout" button in the navigation bar at any time.
+  * Your session is completely cleared.
+  * You are redirected to the Login page.
+
+SESSION SECURITY
+  * Sessions are managed with a server-side secret key.
+  * All pages are protected: unauthenticated users are automatically redirected
+    to the Login page.
+  * If your account is deactivated by the Admin, you will be unable to log in
+    until reactivated.
+
+================================================================================
+5. DASHBOARD (HOME SCREEN)
+================================================================================
+
+URL: /  (redirects here after login)
+
+The Dashboard provides an at-a-glance summary of the entire hospital's EHR data.
+
+STATISTICS CARDS (top row):
+  Total Patients     - Total registered patient count in the database
+  Total Visits       - Total clinical visit encounters recorded
+  Total Diagnoses    - Total diagnosis entries across all visits
+  Lab Results        - Total laboratory test results on record
+  Medications        - Total medication/prescription entries
+  Follow-Ups         - Total follow-up consultations scheduled
+  Overdue FU         - Count of follow-ups with 'Overdue' status
+  Avg Patient Age    - Average age (years) of all registered patients
+
+RECENT PATIENTS PANEL
+  * Shows the 7 most recently registered patients.
+  * Each row shows Patient ID, Name, Age, Gender, Contact.
+  * Clicking a patient name navigates to their Patient Chart.
+
+GENDER DISTRIBUTION CHART
+  * Visual breakdown of male vs. female patients.
+
+TOP 5 COMMON DISEASES
+  * Ranked list of the most frequently diagnosed conditions across all patients.
+  * Useful for identifying population health trends at a glance.
+
+GLOBAL NAVIGATION BAR (visible on all pages)
+  * Dashboard | Patients | Visits | Diagnoses | Lab Results | Medications |
+    Follow-Ups | EHR | Analytics | Admin (visible only to Admin users)
+  * Shows current date/time.
+  * Shows total patient count and overdue follow-up count as quick badges.
+
+================================================================================
+6. MODULE 1: PATIENT MANAGEMENT
+================================================================================
+
+URL: /patients
+
+Patient Management is the core of the EHR system. All clinical data
+(visits, diagnoses, labs, medications, follow-ups) is anchored to a patient record.
+
+6.1  VIEWING THE PATIENT LIST
+────────────────────────────────────────────────────────────────────────────────
+  * Displays all registered patients in paginated table format (25 per page).
+  * Default sort: Newest patients first (by Patient ID descending).
+  * Each row shows: Patient ID (e.g., #P0001), Name, Age, Gender, Contact.
+
+SEARCH
+  * Enter a patient name or phone number in the search bar and press Enter.
+  * The system performs a LIKE search across both name and contact fields.
+  * Search results are also paginated.
+  * To reset search, clear the search box and press Enter.
+
+PAGINATION
+  * Use the page navigation buttons at the bottom to move between pages.
+  * The total patient count and current range are shown above the table.
+
+6.2  REGISTERING A NEW PATIENT
+────────────────────────────────────────────────────────────────────────────────
+Required permission: patients.add (Admin, Doctor)
+URL: /patients/add
+
+FIELDS:
+  Full Name   - Patient's complete legal name (required)
+  Age         - Integer between 1 and 150 (required)
+  Gender      - Dropdown: Male / Female / Other (required)
+  Contact No. - Patient's mobile phone number — critical for WhatsApp
+
+STEPS:
+  1. Click "Add Patient" button from the Patients page or navigation bar.
+  2. Fill in all required fields. ALL fields are mandatory.
+  3. Click "Register Patient".
+  4. On success: Patient is assigned a unique Patient ID (e.g., #P0042).
+  5. You are automatically redirected to the new patient's Chart page.
+  6. A success flash message confirms registration.
+
+TIPS:
+  * Enter the contact number without country code (e.g., 9876543210).
+    The system automatically handles international formatting for WhatsApp.
+  * The Patient ID is auto-incremented and cannot be set manually.
+
+6.3  EDITING PATIENT DEMOGRAPHICS
+────────────────────────────────────────────────────────────────────────────────
+Required permission: patients.edit (Admin, Doctor)
+URL: /edit_patient/<patient_id>
+
+  1. Go to the Patient List or the Patient Chart.
+  2. Click the "Edit" button/link next to the patient.
+  3. Modify any of the fields: Name, Age, Gender, Contact.
+  4. Click "Save Changes".
+  5. You are redirected to the Patients list with a success message.
+
+IMPORTANT: Changing a patient's contact number will affect future WhatsApp
+message delivery. Always verify the updated number is correct.
+
+6.4  DELETING A PATIENT
+────────────────────────────────────────────────────────────────────────────────
+Required permission: patients.delete (Admin ONLY)
+URL: /delete_patient/<patient_id>
+
+  WARNING: Deleting a patient is a PERMANENT, IRREVERSIBLE action. All
+  associated visits, diagnoses, lab results, medications, follow-ups, and
+  invoices linked to the patient will also be deleted (cascading delete).
+
+  1. From the Patient List, click "Delete" next to the patient.
+  2. Confirm deletion.
+  3. The patient record and all associated clinical data are permanently removed.
+  4. A flash message confirms deletion.
+
+Only Admins can delete patients. Doctors and Nurses do not see the Delete option.
+
+6.5  PATIENT CHART (FULL MEDICAL RECORD VIEW)
+────────────────────────────────────────────────────────────────────────────────
+Required permission: patients.view (all roles)
+URL: /patient/<patient_id>
+
+The Patient Chart is the most comprehensive view in the system — a single
+patient's complete medical history presented in organised sections.
+
+SECTIONS IN THE PATIENT CHART:
+  DEMOGRAPHICS        - Name, Age, Gender, Contact, Patient ID
+  VISIT HISTORY       - Chronological list of all visits with doctor names
+  DIAGNOSES           - All diagnoses linked to this patient's visits
+  LABORATORY RESULTS  - All lab tests and their result values
+  MEDICATIONS         - All prescribed drugs and dosages
+  FOLLOW-UP SCHEDULE  - All scheduled, completed, or overdue follow-ups
+
+ACTIONS AVAILABLE FROM PATIENT CHART:
+  * Record New Visit          -- Add a visit encounter for this patient
+  * Add Diagnosis             -- Log a diagnosis for a visit
+  * Add Lab Result            -- Enter a laboratory test result
+  * Prescribe Medication      -- Add a medication prescription
+  * Schedule Follow-Up        -- Book a follow-up consultation
+  * Print Prescription        -- Open the printable prescription for a visit
+  * Send via WhatsApp         -- Send prescription details to patient's phone
+  * View Invoice              -- Open the billing invoice for a visit
+  * Edit Patient Demographics -- Modify patient's basic info
+
+QUICK LINKS FROM VISITS IN CHART:
+  Each visit row shows:
+  - Visit ID, Visit Date, Doctor Name
+  - [Print Prescription] link
+  - [Send WhatsApp] link (sends prescription to patient)
+  - [View Invoice] link
+
+================================================================================
+7. MODULE 2: VISIT MANAGEMENT
+================================================================================
+
+URL: /visits
+
+A "Visit" represents a single clinical encounter between a patient and a doctor.
+All diagnoses, lab results, and medications are linked to a specific visit.
+
+7.1  VIEWING THE VISITS REGISTRY
+────────────────────────────────────────────────────────────────────────────────
+  * Shows all visit encounters in descending order (most recent first).
+  * Each row: Visit ID, Patient Name, Gender, Visit Date, Doctor Name.
+  * Paginated at 25 records per page.
+
+SEARCH
+  * Search by patient name or doctor name.
+  * Searches are case-insensitive partial matches.
+
+7.2  RECORDING A NEW VISIT
+────────────────────────────────────────────────────────────────────────────────
+Required permission: visits.add (Admin, Doctor)
+URL: /visits/add
+
+FIELDS:
+  Patient      - Dropdown list of all patients (newest first)
+  Visit Date   - Date of consultation (defaults to today's date)
+  Doctor Name  - Name of attending doctor (auto-filled for Doctor role)
+
+STEPS:
+  1. Click "Record Visit" from the Visits page or from a Patient Chart.
+  2. Select the patient from the dropdown (newest patients appear at top).
+  3. Confirm or adjust the visit date.
+  4. Enter the doctor's name (Doctors see their login username pre-filled).
+  5. Click "Save Visit".
+  6. You are redirected to the Patient Chart of that patient.
+
+TIP: To pre-select a patient when coming from the Patient Chart, the system
+automatically passes the patient ID to the form, so the correct patient
+is already selected.
+
+7.3  AUTO-INVOICE ON VISIT CREATION
+────────────────────────────────────────────────────────────────────────────────
+When a new visit is recorded, the system automatically creates a billing invoice
+with default values:
+  * Consultation Fee: Rs. 500.00
+  * Pharmacy Fee:     Rs. 0.00
+  * Lab Fee:          Rs. 0.00
+  * Tax Amount:       Rs. 25.00
+  * Total Amount:     Rs. 525.00
+  * Payment Status:   Paid
+  * Payment Method:   UPI
+  * Invoice Number:   INV-XXXXXX (based on visit ID)
+
+This invoice can be viewed via the Billing module. It is also included in
+WhatsApp prescription messages sent to the patient.
+
+================================================================================
+8. MODULE 3: DIAGNOSIS MANAGEMENT
+================================================================================
+
+URL: /diagnoses
+
+Diagnoses are clinical conditions identified during a visit and recorded
+against a specific visit encounter.
+
+8.1  VIEWING ALL DIAGNOSES
+────────────────────────────────────────────────────────────────────────────────
+  * Table shows: Diagnosis ID, Patient Name, Disease Name, Visit Date, Doctor.
+  * Sorted newest first. Paginated at 25 per page.
+
+SEARCH
+  * Search by disease name or patient name.
+
+8.2  ADDING A NEW DIAGNOSIS
+────────────────────────────────────────────────────────────────────────────────
+Required permission: diagnoses.add (Admin, Doctor)
+URL: /diagnoses/add
+
+FIELDS:
+  Visit (Encounter)         - Dropdown of recent 500 visits with patient names
+  Disease / Diagnosis Name  - Free-text clinical condition name
+
+STEPS:
+  1. Click "Add Diagnosis" from the Diagnoses page.
+  2. Select the visit from the dropdown (shows patient name, visit date, doctor).
+  3. Enter the disease/condition name (e.g., "Type 2 Diabetes").
+  4. Click "Save Diagnosis".
+  5. The diagnosis is saved and you are returned to the Diagnoses list.
+
+NOTE: Multiple diagnoses can be added to the same visit to capture comorbidities.
+Each diagnosis appears separately in the patient's chart and in the EHR registry.
+
+================================================================================
+9. MODULE 4: LABORATORY RESULTS
+================================================================================
+
+URL: /lab_results
+
+Laboratory results link specific tests and findings to a visit encounter.
+
+9.1  VIEWING LAB RESULTS
+────────────────────────────────────────────────────────────────────────────────
+  * Table shows: Lab ID, Patient Name, Test Name, Result Value, Visit Date.
+  * Sorted newest first. Paginated at 25 per page.
+
+SEARCH
+  * Search by test name or patient name.
+
+9.2  ADDING A LAB RESULT
+────────────────────────────────────────────────────────────────────────────────
+Required permission: labs.add (Admin, Doctor, Nurse)
+URL: /lab_results/add
+
+  NOTE: This is one of the few actions Nurses are authorized to perform.
+
+FIELDS:
+  Visit         - Dropdown of recent 500 visits with patient names
+  Test Name     - Name of the lab test (e.g., "Fasting Blood Sugar")
+  Result Value  - Test result (e.g., "165 mg/dL", "Normal", "Abnormal")
+
+STEPS:
+  1. Click "Add Lab Result" from the Lab Results page.
+  2. Select the visit from the dropdown.
+  3. Enter the test name (e.g., "Blood Pressure", "CBC", "HbA1c").
+  4. Enter the result value (free text, e.g., "150/95 mmHg").
+  5. Click "Save Lab Result".
+
+EXAMPLES OF TEST ENTRIES:
+  Test Name            | Result Value
+  ---------------------|---------------------
+  Blood Pressure       | 150/95 mmHg
+  Hemoglobin           | 9.8 g/dL
+  Fasting Blood Sugar  | 165 mg/dL
+  TSH                  | 8.2 uIU/mL
+  Chest X-Ray          | Inflammation
+  MRI Brain            | Normal
+
+================================================================================
+10. MODULE 5: MEDICATIONS & PRESCRIPTIONS
+================================================================================
+
+URL: /medications
+
+The Medications module manages drug prescriptions linked to clinical visits.
+It also supports generating printable prescriptions and WhatsApp delivery.
+
+10.1  VIEWING MEDICATIONS
+────────────────────────────────────────────────────────────────────────────────
+  * Table shows: Med ID, Patient Name, Drug Name, Dosage, Visit Date, Doctor.
+  * Sorted newest first. Paginated at 25 per page.
+
+SEARCH
+  * Search by drug name or patient name.
+
+10.2  PRESCRIBING A MEDICATION
+────────────────────────────────────────────────────────────────────────────────
+Required permission: medications.add (Admin, Doctor)
+URL: /medications/add
+
+FIELDS:
+  Visit      - Dropdown of recent 500 visits with patient names
+  Drug Name  - Name of medicine (e.g., "Metformin", "Amlodipine")
+  Dosage     - Dose and frequency (e.g., "500 mg BD", "5 mg OD")
+
+DOSAGE ABBREVIATIONS GUIDE:
+  OD  = Once Daily          BD  = Twice Daily
+  TID = Three times daily   QID = Four times daily
+  SOS = As Needed (pro re nata)
+  HS  = At Bedtime          AC  = Before Meals
+  PC  = After Meals
+
+STEPS:
+  1. Click "Prescribe Medication" from the Medications page.
+  2. Select the appropriate visit from the dropdown.
+  3. Enter the drug name and dosage instructions.
+  4. Click "Save Prescription".
+  5. Multiple medications can be added to the same visit.
+
+10.3  PRINTING / DOWNLOADING A PRESCRIPTION
+────────────────────────────────────────────────────────────────────────────────
+Required permission: medications.view (all roles)
+URL: /prescription/<visit_id>
+
+The prescription page generates a professional, print-ready prescription slip
+containing all clinical details for a specific visit.
+
+PRESCRIPTION SLIP CONTAINS:
+  * Hospital header (CliniCore General Hospital)
+  * Prescription Reference Number (e.g., RX-000042)
+  * Patient Details: Name, Age, Gender, Contact, Patient ID
+  * Visit Details: Date, Attending Doctor
+  * Clinical Diagnoses listed
+  * Prescribed Medications with dosage
+  * Laboratory Test Results
+  * Billing Invoice Summary (Invoice No., Fees, Total, Payment Status)
+  * WhatsApp send button to deliver prescription digitally
+  * Print button to print or save as PDF
+
+HOW TO PRINT:
+  1. From the Patient Chart, click the "Print Prescription" link on a visit row.
+  2. The prescription page opens in a clean, printable layout.
+  3. Use your browser's Print function (Ctrl+P / Cmd+P) to print or save as PDF.
+  4. Alternatively, click the "Send via WhatsApp" button on the page to send
+     the prescription directly to the patient's registered mobile number.
+
+================================================================================
+11. MODULE 6: FOLLOW-UP CARE TRACKING
+================================================================================
+
+URL: /follow_ups
+
+The Follow-Up module manages scheduled consultations for patients who need
+ongoing monitoring or review appointments after their initial visit.
+
+11.1  VIEWING FOLLOW-UP LIST
+────────────────────────────────────────────────────────────────────────────────
+  * Lists all follow-ups with real-time status indicators.
+  * Sorted: Overdue first, then Scheduled by date, then Completed.
+  * Paginated at 25 per page.
+
+FILTER OPTIONS:
+  * Status Filter:   All | Scheduled | Overdue | Completed
+  * Priority Filter: All | Normal | High | Urgent
+  * Search Bar:      Search by patient name, contact number, or doctor name
+
+STATUS COUNTERS (top of page):
+  Total       - All follow-up records
+  Scheduled   - Upcoming appointments not yet due
+  Overdue     - Appointments whose scheduled date has passed
+  Completed   - Successfully attended review consultations
+
+AUTO-OVERDUE DETECTION:
+  Every time the Follow-Up list page is loaded, the system automatically
+  scans all 'Scheduled' follow-ups and marks any where the scheduled_date
+  is before today as 'Overdue'. This happens in real-time with no manual
+  intervention required.
+
+11.2  SCHEDULING A FOLLOW-UP
+────────────────────────────────────────────────────────────────────────────────
+Required permission: follow_ups.add (Admin, Doctor)
+URL: /follow_ups/add
+
+FIELDS:
+  Patient          - Dropdown of all patients (newest first)
+  Scheduled Date   - Date for review (defaults to 14 days from today)
+  Follow-Up Type   - Type of review consultation (see list below)
+  Priority         - Normal / High / Urgent
+  Physician Notes  - Special instructions or observations (optional)
+  Doctor Name      - Attending physician for the follow-up
+
+FOLLOW-UP TYPES:
+  * Routine Review               * Post-Surgery Review
+  * Lab Results Review           * Medication Adjustment
+  * Chronic Disease Management   * Physiotherapy Review
+  * Specialist Referral          * Emergency Review
+
+STEPS:
+  1. Click "Schedule Follow-Up" from the Follow-Ups page.
+  2. Select the patient.
+  3. Set the scheduled date (default: 2 weeks from today).
+  4. Choose the follow-up type appropriate for the case.
+  5. Set priority level: Normal (green), High (yellow), Urgent (red).
+  6. Add any physician instructions in the Notes field.
+  7. Enter the doctor's name who will conduct the review.
+  8. Click "Schedule Follow-Up".
+
+11.3  FOLLOW-UP STATUS LIFECYCLE
+────────────────────────────────────────────────────────────────────────────────
+
+  [Scheduled] -- (date passes automatically) --> [Overdue]
+      |                                               |
+      | (manually set)                       (manually set)
+      v                                               v
+  [Completed]                                   [Cancelled]
+
+Valid statuses: Scheduled -> Overdue -> Completed / Cancelled
+
+11.4  UPDATING FOLLOW-UP STATUS
+────────────────────────────────────────────────────────────────────────────────
+Required permission: follow_ups.edit (Admin, Doctor, Nurse)
+
+From the Follow-Up List, each row has status-update buttons:
+  * Mark as Completed   -> Patient attended the review
+  * Mark as Cancelled   -> Appointment was cancelled
+  * Mark as Scheduled   -> Reset to Scheduled (if overdue in error)
+
+These actions can also be performed from the Patient Chart (status updates
+redirect back to the patient chart for smooth workflow).
+
+NURSE WORKFLOW:
+  Nurses can update follow-up statuses (Scheduled -> Completed / Cancelled).
+  This allows ward nurses to confirm when a patient has arrived for their
+  scheduled review without needing full clinical data access.
+
+================================================================================
+12. MODULE 7: BILLING & INVOICING
+================================================================================
+
+12.1  AUTO-GENERATED INVOICES
+────────────────────────────────────────────────────────────────────────────────
+An invoice is automatically created every time a new visit is recorded.
+Invoice numbers follow the format: INV-XXXXXX (e.g., INV-000042).
+
+12.2  VIEWING A BILL / INVOICE
+────────────────────────────────────────────────────────────────────────────────
+Required permission: patients.view (all roles)
+
+Route 1 (by Invoice ID):  /bill/<invoice_id>
+Route 2 (by Visit ID):    /bill/visit/<visit_id>  -- auto-redirects to invoice
+
+From Patient Chart:
+  1. Locate the visit in the Visit History section.
+  2. Click the "Invoice" link on the visit row.
+  3. The invoice page opens showing a complete billing breakdown.
+
+12.3  INVOICE FIELDS & FEE BREAKDOWN
+────────────────────────────────────────────────────────────────────────────────
+
+  Field               Description
+  -----------------------------------------------------------
+  Invoice Number      Unique invoice identifier (INV-XXXXXX)
+  Invoice Date        Date of the visit / invoice creation
+  Patient Details     Name, Age, Gender, Contact
+  Doctor Name         Attending physician
+  Consultation Fee    Doctor's consultation charge (default Rs. 500.00)
+  Pharmacy Fee        Charges for dispensed medicines (default Rs. 0.00)
+  Lab Fee             Charges for laboratory tests (default Rs. 0.00)
+  Tax Amount          Applicable tax/surcharge (default Rs. 25.00)
+  Total Amount        Sum of all charges including tax (default Rs. 525.00)
+  Payment Status      Paid / Pending / Partially Paid
+  Payment Method      UPI / Cash / Card / Insurance
+
+WHATSAPP BILLING SUMMARY:
+  The billing summary is automatically included in the WhatsApp prescription
+  message. Patients receive their invoice number, fees breakdown, total amount,
+  and payment status directly on their phone.
+
+PRINTING THE INVOICE:
+  1. Open the invoice/bill page.
+  2. Use browser Print (Ctrl+P / Cmd+P) to print or save as PDF.
+  3. Alternatively, click "Send via WhatsApp" to send the bill digitally.
+
+================================================================================
+13. MODULE 8: FULL EHR REGISTRY VIEW
+================================================================================
+
+URL: /ehr
+Required permission: ehr.view (Admin, Doctor)
+
+The EHR (Electronic Health Record) Registry provides a unified, consolidated
+view of ALL clinical encounters -- combining patient demographics, visit data,
+diagnoses, lab results, and medications in a single tabular view.
+
+COLUMNS:
+  Patient ID | Patient Name | Age | Gender | Visit ID | Visit Date |
+  Doctor | Diagnosis | Lab Test | Lab Result | Drug Name | Dosage
+
+PAGINATION:
+  * 20 records per page.
+  * Page navigation at the bottom.
+
+USE CASES:
+  * Clinical audits and record reviews
+  * Verification of data entry completeness
+  * Cross-referencing patient clinical data across all modules
+
+NOTE: Records shown are only those where ALL of the following exist for a
+visit: at least one diagnosis, one lab result, and one medication. Visits
+missing any of these will not appear in the EHR Registry view (they appear
+in individual module views and on the Patient Chart).
+
+NOTE FOR NURSES: Nurses do not have access to the EHR Registry View.
+
+================================================================================
+14. MODULE 9: ANALYTICS & REPORTS
+================================================================================
+
+URL: /analytics
+Required permission: analytics.view (Admin, Doctor)
+
+The Analytics module provides real-time population health insights and clinical
+statistics derived from the EHR database.
+
+14.1  GENDER DISTRIBUTION
+────────────────────────────────────────────────────────────────────────────────
+  * Bar/pie chart showing the count of Male, Female, and Other patients.
+  * Useful for identifying patient population demographics.
+
+14.2  TOP 10 DISEASES
+────────────────────────────────────────────────────────────────────────────────
+  * Ranked list of the 10 most frequently diagnosed diseases across the hospital.
+  * Sorted by frequency (highest first).
+  * Helps identify prevalent conditions for resource planning.
+
+14.3  AGE GROUP BREAKDOWN
+────────────────────────────────────────────────────────────────────────────────
+  Age groups are automatically classified:
+    0-17    Pediatric
+    18-29   Young Adult
+    30-44   Adult
+    45-59   Middle-Aged
+    60+     Senior
+
+  * Shows patient count for each age bracket.
+  * Helps clinicians understand which populations the hospital serves most.
+
+14.4  TOP 10 PRESCRIBED MEDICATIONS
+────────────────────────────────────────────────────────────────────────────────
+  * Ranked list of the 10 most frequently prescribed drugs.
+  * Useful for pharmacy inventory planning and formulary management.
+
+14.5  SUMMARY STATISTICS
+────────────────────────────────────────────────────────────────────────────────
+  The Analytics page also shows the same key statistics as the Dashboard:
+  Total Patients, Visits, Diagnoses, Labs, Medications, Follow-Ups,
+  Overdue Follow-Ups, and Average Patient Age.
+
+NOTE: Nurses do not have access to the Analytics module.
+
+================================================================================
+15. MODULE 10: ADMIN — USER MANAGEMENT
+================================================================================
+
+URL: /admin/users
+Required permission: admin.users (Admin ONLY)
+
+User Management is exclusively available to Admin role users. It allows
+complete control over system access accounts.
+
+15.1  VIEWING ALL USERS
+────────────────────────────────────────────────────────────────────────────────
+  * Displays a table of all system users.
+  * Columns: User ID, Username, Role, Status (Active / Inactive).
+  * Each row shows actions: Toggle Active/Inactive, Delete.
+
+15.2  CREATING A NEW USER
+────────────────────────────────────────────────────────────────────────────────
+FIELDS:
+  Username     - Unique login identifier for the new user
+  Password     - Login password (use strong passwords)
+  Role         - Dropdown: Admin / Doctor / Nurse
+
+STEPS:
+  1. Go to Admin -> User Management.
+  2. Fill in the "Add New User" form on the right side of the page.
+  3. Enter a unique username, a password, and select a role.
+  4. Click "Create User".
+  5. The new user appears in the table and can immediately log in.
+
+VALIDATION:
+  * All three fields are required -- none can be empty.
+  * The role must be one of: Admin, Doctor, or Nurse.
+  * An error message is shown if the username is already taken.
+
+15.3  ACTIVATING / DEACTIVATING A USER
+────────────────────────────────────────────────────────────────────────────────
+  * Click the toggle button (Active/Inactive) on a user row.
+  * Deactivated users CANNOT log into the system.
+  * Their account is preserved in the database but login is blocked.
+  * Reactivate at any time by clicking the toggle again.
+
+USE CASE: Temporarily block access for staff on leave, suspended accounts,
+or resigned employees without permanently deleting their record.
+
+15.4  DELETING A USER
+────────────────────────────────────────────────────────────────────────────────
+  * Click the "Delete" button on a user row.
+  * The user account is permanently removed from the system.
+  * The user will no longer be able to log in.
+
+WARNING: Deletion is irreversible. Consider deactivating instead of deleting
+unless you are certain the account is no longer needed.
+
+15.5  SECURITY SAFEGUARDS
+────────────────────────────────────────────────────────────────────────────────
+  * User ID 1 (the primary Admin account) CANNOT be deactivated or deleted.
+    This protects against accidental lockout from the system.
+  * If an Admin tries to deactivate/delete User ID 1, the system shows:
+    "Cannot deactivate/delete the primary admin account."
+
+BEST PRACTICES FOR USER MANAGEMENT:
+  1. Create individual accounts for each staff member. Do not share logins.
+  2. Assign the minimum required role (least privilege principle).
+  3. Deactivate accounts immediately when staff leave the organisation.
+  4. Regularly audit the user list for inactive or unknown accounts.
+  5. Use strong passwords and change them periodically.
+
+================================================================================
+16. WHATSAPP INTEGRATION
+================================================================================
+
+CliniCore features built-in WhatsApp integration that allows clinical staff to
+send formatted digital prescriptions and follow-up reminders directly to
+patients' registered mobile phones -- with a single click.
+
+16.1  OVERVIEW & HOW IT WORKS
+────────────────────────────────────────────────────────────────────────────────
+The system uses the WhatsApp Web/App API link format:
+  https://api.whatsapp.com/send?phone=<phone>&text=<message>
+
+When a staff member clicks a WhatsApp send button:
+  1. The system retrieves the patient's registered phone number.
+  2. The phone number is cleaned and formatted to international E.164 format
+     (e.g., +91 9876543210 becomes 919876543210).
+  3. A professionally formatted message is composed with all relevant details.
+  4. The browser opens WhatsApp Web (or the mobile app on mobile devices)
+     with the message pre-filled, addressed to the patient's number.
+  5. The staff member clicks "Send" in WhatsApp to deliver the message.
+
+NO AUTOMATED SENDING: Messages are not sent automatically. The staff member
+always has the opportunity to review the pre-filled message before sending.
+This ensures accuracy and gives clinical staff full control.
+
+16.2  PRESCRIPTION WHATSAPP MESSAGE
+────────────────────────────────────────────────────────────────────────────────
+Sent when: Staff clicks "Send via WhatsApp" from a visit or prescription page.
+
+MESSAGE CONTAINS:
+  * Hospital Header: CliniCore General Hospital -- EHR/EMR Portal
+  * Greeting with patient's name
+  * Prescription Reference Number (RX-XXXXXX)
+  * Patient ID
+  * Clinical Diagnosis (all diagnoses for the visit)
+  * Prescribed Medications list with dosage and instructions
+  * Billing Invoice Summary:
+      - Invoice Number
+      - Consultation Fee
+      - Pharmacy Charges (if any)
+      - Lab Charges (if any)
+      - Tax Amount
+      - Total Amount with Payment Status and Method
+      - Link to view official tax invoice
+  * Link to download/print official prescription PDF
+  * Validity note (prescription valid 30 days)
+  * Hospital helpline number
+
+EXAMPLE MESSAGE:
+  CLINICORE GENERAL HOSPITAL -- EHR/EMR PORTAL
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Dear Rahul Kumar,
+  Here is your official Digital Prescription & Visit Summary for your
+  consultation with Dr. Sharma on 2026-01-05.
+
+  Prescription Ref: RX-000001
+  Patient ID: #P0001
+  Clinical Diagnosis: Hypertension
+
+  PRESCRIBED MEDICATIONS:
+    1. Amlodipine -- 5 mg OD
+       Instructions: Take as directed. Complete full course.
+
+  BILLING & INVOICE SUMMARY:
+    Invoice No: INV-000001
+    Consultation Fee: Rs. 500.00
+    Taxes & Surcharges: Rs. 25.00
+    Total Amount: Rs. 525.00 (Paid via UPI)
+    View Official Tax Invoice: http://127.0.0.1:5000/bill/1
+
+  DOWNLOAD & PRINT OFFICIAL PRESCRIPTION PDF:
+  http://127.0.0.1:5000/prescription/1
+
+  Note: This prescription is valid for 30 days.
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Helpline: +91-1234-567890 | clinicore.health
+
+16.3  FOLLOW-UP REMINDER WHATSAPP MESSAGE
+────────────────────────────────────────────────────────────────────────────────
+Sent when: Staff clicks the WhatsApp icon from a follow-up record.
+
+MESSAGE CONTAINS:
+  * Hospital Header: CliniCore General Hospital -- Care Management
+  * Patient greeting
+  * Priority alert (URGENT if priority = Urgent, HIGH PRIORITY if High)
+  * Scheduled Review Date
+  * Follow-Up Type (e.g., "Routine Review", "Lab Results Review")
+  * Attending Physician Name
+  * Follow-Up Reference Number (FU-XXXX)
+  * Physician Notes / Special Instructions (if any)
+  * Link to Patient Portal / Chart
+  * Instructions to reply or call to reschedule
+  * Appointments Desk phone number
+
+PRIORITY INDICATORS IN MESSAGES:
+  Normal priority  -> No special alert in message
+  High priority    -> HIGH PRIORITY REVIEW banner
+  Urgent priority  -> URGENT MEDICAL REVIEW banner
+
+16.4  SENDING WHATSAPP FROM PRESCRIPTION PAGE
+────────────────────────────────────────────────────────────────────────────────
+Method 1 -- From Prescription Print Page:
+  1. Navigate to Patient Chart -> Visit Row -> Click "Print Prescription".
+  2. On the prescription page, click the "Send via WhatsApp" button.
+  3. WhatsApp Web opens with the pre-filled message.
+  4. Click Send in WhatsApp.
+
+Method 2 -- Direct WhatsApp Send (from Patient Chart):
+  1. On the Patient Chart, in the Visit History section, click the WhatsApp icon.
+  2. WhatsApp opens directly -- skipping the prescription preview step.
+  3. This route is: /prescription/whatsapp/<visit_id>
+
+16.5  SENDING WHATSAPP FROM FOLLOW-UP LIST
+────────────────────────────────────────────────────────────────────────────────
+  1. Go to the Follow-Ups module.
+  2. Find the follow-up record you want to remind the patient about.
+  3. Click the WhatsApp icon in the action column.
+  4. WhatsApp Web opens with the pre-filled follow-up reminder message.
+  5. Review and click Send.
+
+Route: /follow_up/whatsapp/<follow_up_id>
+
+16.6  PHONE NUMBER HANDLING & COUNTRY CODE
+────────────────────────────────────────────────────────────────────────────────
+The system intelligently cleans and formats phone numbers:
+
+  Input format             WhatsApp format
+  -----------------------------------------
+  9876543210 (10 digits)   919876543210  (India +91 added)
+  09876543210 (with 0)     919876543210  (leading 0 replaced)
+  919876543210 (12 digits) 919876543210  (kept as-is)
+  +919876543210            919876543210  (+ removed)
+
+DEFAULT COUNTRY CODE: India (+91)
+To change the default country code, modify the 'default_country_code'
+parameter in the format_whatsapp_phone() function in whatsapp_service.py.
+  E.g., for the UAE use "971", for the UK use "44".
+
+16.7  TROUBLESHOOTING WHATSAPP
+────────────────────────────────────────────────────────────────────────────────
+
+PROBLEM: "Patient does not have a registered contact number."
+SOLUTION: Go to Patient Chart -> Edit Patient -> Enter a valid phone number.
+
+PROBLEM: WhatsApp opens but to the wrong number.
+SOLUTION: Verify the contact number in the Patient demographics. Edit if wrong.
+
+PROBLEM: WhatsApp link opens to a blank chat or "Number not on WhatsApp."
+SOLUTION: The patient's phone number may not be registered on WhatsApp.
+          You may need to call or SMS them directly.
+
+PROBLEM: WhatsApp Web does not open.
+SOLUTION: Ensure WhatsApp Web (web.whatsapp.com) is signed in on the browser
+          OR WhatsApp is installed on the device for the mobile app redirect.
+
+PROBLEM: Message is truncated or not fully pre-filled.
+SOLUTION: Very long messages may be truncated by browser URL limits.
+          This is a browser/WhatsApp Web limitation.
+
+================================================================================
+17. SEARCH & PAGINATION SYSTEM
+================================================================================
+
+SEARCH FUNCTIONALITY (Available in all major list views)
+  * Works via URL query parameter: ?q=<search_term>
+  * Uses SQL LIKE pattern matching: %search_term%
+  * Case-insensitive search.
+  * Searches are performed on relevant fields per module:
+      Patients:   Name, Contact Number
+      Visits:     Patient Name, Doctor Name
+      Diagnoses:  Disease Name, Patient Name
+      Lab Results: Test Name, Patient Name
+      Medications: Drug Name, Patient Name
+      Follow-Ups: Patient Name, Contact, Doctor Name
+
+PAGINATION SYSTEM
+  * All major list views are paginated at 25 records per page
+    (EHR Registry uses 20 per page).
+  * Pagination controls appear at the bottom of each list.
+  * Shows: [First] [Previous] [1] [2] [3] [Next] [Last] buttons.
+  * Page range window: Shows up to 5 page numbers centred on current page.
+  * Search + pagination work together: search results are paginated too.
+  * Pagination is server-side (no full page data loaded into browser memory).
+
+URL PARAMETERS:
+  ?page=<number>     Jump to a specific page
+  ?q=<query>         Search term
+  ?status=<status>   Status filter (Follow-Ups)
+  ?priority=<level>  Priority filter (Follow-Ups)
+
+EXAMPLE URL:
+  /follow_ups?q=Rahul&status=Overdue&priority=Urgent&page=2
+
+================================================================================
+18. NOTIFICATIONS & FLASH MESSAGES
+================================================================================
+
+The system provides real-time feedback to users through Flash Messages --
+coloured banners that appear at the top of the page after an action.
+
+FLASH MESSAGE TYPES:
+  SUCCESS (green)  -- Action completed successfully
+                       Example: "Patient 'Rahul Kumar' registered successfully (#P0042)"
+  ERROR   (red)    -- An error occurred or access was denied
+                       Example: "Access Denied: You do not have permission 'patients.delete'."
+
+COMMON FLASH MESSAGES:
+  * "Patient '{name}' registered successfully (#P{id}) and added to database."
+  * "Visit recorded successfully and added to EHR registry."
+  * "Diagnosis added."
+  * "Lab result added."
+  * "Medication prescribed."
+  * "Follow-up consultation successfully scheduled."
+  * "Follow-up #FU{id} marked as {Completed/Cancelled/Scheduled}."
+  * "Patient '{name}' updated."
+  * "Patient '{name}' permanently deleted."
+  * "User '{username}' created with role '{role}'."
+  * "User '{username}' activated/deactivated."
+  * "User '{username}' deleted."
+  * "Cannot deactivate/delete the primary admin account."
+  * "Access Denied: You do not have permission '{permission}'."
+  * "Invalid credentials or account inactive."
+
+Flash messages disappear when you navigate to the next page.
+
+================================================================================
+19. DATABASE SCHEMA REFERENCE
+================================================================================
+
+The system uses a MySQL database named 'ehrs' with the following tables:
+
+TABLE: patients
+  patient_id   INT (PK)      Auto-increment unique identifier
+  name         VARCHAR(100)  Full name of the patient
+  age          INT           Age in years
+  gender       VARCHAR(10)   Male / Female / Other
+  contact      VARCHAR(15)   Mobile phone number
+
+TABLE: visits
+  visit_id     INT (PK)      Auto-increment unique visit identifier
+  patient_id   INT (FK)      References patients.patient_id
+  visit_date   DATE          Date of the clinical encounter
+  doctor_name  VARCHAR(100)  Name of attending physician
+
+TABLE: diagnoses
+  diagnosis_id  INT (PK)      Auto-increment
+  visit_id      INT (FK)      References visits.visit_id
+  disease_name  VARCHAR(100)  Clinical diagnosis / condition name
+
+TABLE: lab_results
+  lab_id        INT (PK)     Auto-increment
+  visit_id      INT (FK)     References visits.visit_id
+  test_name     VARCHAR(100) Name of laboratory test
+  result_value  VARCHAR(50)  Test result (value, units, or status)
+
+TABLE: medications
+  med_id     INT (PK)      Auto-increment
+  visit_id   INT (FK)      References visits.visit_id
+  drug_name  VARCHAR(100)  Name of prescribed medication
+  dosage     VARCHAR(50)   Dose and frequency instructions
+
+TABLE: follow_ups
+  follow_up_id    INT (PK)      Auto-increment
+  patient_id      INT (FK)      References patients.patient_id
+  scheduled_date  DATE          Date of scheduled review
+  follow_up_type  VARCHAR(100)  Type of review consultation
+  status          VARCHAR(50)   Scheduled / Overdue / Completed / Cancelled
+  priority        VARCHAR(20)   Normal / High / Urgent
+  notes           TEXT          Physician instructions / observations
+  doctor_name     VARCHAR(100)  Reviewing physician
+
+TABLE: users
+  user_id    INT (PK)      Auto-increment
+  username   VARCHAR(50)   Login username (unique)
+  password   VARCHAR(50)   Login password
+  role       VARCHAR(20)   Admin / Doctor / Nurse
+  is_active  TINYINT(1)    1 = Active, 0 = Deactivated
+
+TABLE: billing_invoices
+  invoice_id        INT (PK)      Auto-increment
+  visit_id          INT (FK)      References visits.visit_id
+  patient_id        INT (FK)      References patients.patient_id
+  invoice_number    VARCHAR(20)   INV-XXXXXX format
+  invoice_date      DATE          Date of invoice creation
+  consultation_fee  DECIMAL       Doctor consultation charge
+  pharmacy_fee      DECIMAL       Pharmacy/medicine charges
+  lab_fee           DECIMAL       Laboratory test charges
+  tax_amount        DECIMAL       Tax / surcharge
+  total_amount      DECIMAL       Grand total
+  payment_status    VARCHAR(30)   Paid / Pending / Partially Paid
+  payment_method    VARCHAR(30)   UPI / Cash / Card / Insurance
+
+================================================================================
+20. TROUBLESHOOTING & FAQS
+================================================================================
+
+Q: I cannot log in. What should I do?
+A: 1. Verify your username and password are correct (case-sensitive).
+   2. Ask your Admin to check if your account is Active.
+   3. Ensure the Flask server (app.py) is running.
+   4. Check that the MySQL database is running and accessible.
+
+Q: I see "Access Denied" for an action I should be able to perform.
+A: Your user role does not include that permission. Contact your Admin to
+   verify your role assignment or to upgrade your role if appropriate.
+
+Q: Why is a follow-up showing as 'Overdue' when I haven't marked it?
+A: This is automatic. Every time the Follow-Up page loads, the system
+   automatically marks all 'Scheduled' follow-ups past their date as 'Overdue'.
+   This is by design to ensure no missed appointments go unnoticed.
+
+Q: The WhatsApp message is not going to the right number.
+A: Check the patient's Contact field. Go to Patient Chart -> Edit Patient and
+   update the phone number. Re-send after correcting.
+
+Q: The patient does not have WhatsApp. How do I send them their prescription?
+A: 1. Use the Print Prescription page to print/save as PDF and email it.
+   2. Call the patient directly on their registered number.
+   3. Give them a physical printout during their visit.
+
+Q: Can I edit a visit date or change the doctor name after saving?
+A: The current version does not have an "Edit Visit" page. Visit records are
+   immutable after creation. If a correction is needed, contact your Admin to
+   directly update the database.
+
+Q: Can I edit a diagnosis, lab result, or medication after saving?
+A: Currently, the system supports add-only for these clinical entries.
+   Contact the Admin for database-level corrections.
+
+Q: Why does the EHR Registry View show fewer records than expected?
+A: The EHR Registry only shows visits that have at least one diagnosis, one
+   lab result, AND one medication recorded. Incomplete visits do not appear.
+   Use the individual module pages (Diagnoses, Lab Results, Medications) or
+   the Patient Chart to see all data.
+
+Q: The application is running very slowly. What can I do?
+A: 1. Check that your MySQL server is running optimally.
+   2. Ensure indexes exist on foreign key columns (patient_id, visit_id).
+   3. Reduce the 'per_page' count in app.py if data volumes are very high.
+   4. Contact your IT administrator for server performance improvements.
+
+Q: How do I add a new doctor to the system?
+A: Go to Admin -> User Management -> Add New User, and assign them the
+   "Doctor" role. Their login username becomes their identity in the system.
+
+Q: Can I customise the default consultation fee in invoices?
+A: Yes, modify the default values in the add_visit() route in app.py,
+   specifically in the INSERT INTO billing_invoices statement.
+
+Q: Can I change the WhatsApp country code from India (+91)?
+A: Yes. In whatsapp_service.py, modify the 'default_country_code' parameter
+   in the format_whatsapp_phone() function to your country code.
+   E.g., for the UAE use "971", for the UK use "44".
+
+================================================================================
+21. GLOSSARY
+================================================================================
+
+TERM              DEFINITION
+------------------------------------------------------------------------------
+EHR               Electronic Health Record -- A digital record of a patient's
+                  complete medical history across their lifetime of care.
+
+EMR               Electronic Medical Record -- A digital version of a patient's
+                  chart within a single clinical organisation.
+
+RBAC              Role-Based Access Control -- A security model where system
+                  permissions are grouped into roles assigned to users.
+
+Visit             A clinical encounter between a patient and a doctor on
+                  a specific date.
+
+Diagnosis         A clinical condition identified and recorded during a visit.
+
+Lab Result        A laboratory test result linked to a specific visit encounter.
+
+Medication        A prescribed drug and its dosage instructions for a patient.
+
+Follow-Up         A scheduled review consultation for ongoing monitoring.
+
+Invoice           A billing document generated for each visit encounter
+                  detailing fees and payment status.
+
+Prescription      A clinical document listing the diagnoses and medications
+                  prescribed during a visit, suitable for printing and sharing.
+
+WhatsApp Link     A URL that opens WhatsApp with a pre-filled message to a
+                  specific patient phone number.
+
+Flash Message     A temporary notification banner shown to the user after
+                  completing or failing an action.
+
+Pagination        The division of large data sets into multiple pages to
+                  improve page load performance and readability.
+
+OD                Once Daily (medication dosage frequency)
+BD                Twice Daily (medication dosage frequency)
+TID               Three Times Daily (medication dosage frequency)
+SOS               As Required / As Needed (pro re nata)
+HS                At Bedtime (hora somni)
+
+E.164             International telephone number format standard
+                  (e.g., +919876543210 becomes 919876543210 without the +)
+
+Admin             The highest-privilege system user role with full access
+                  including user management.
+
+Doctor            Clinical user role with full EHR data entry rights
+                  but no user management access.
+
+Nurse             Limited clinical role with read access and ability to
+                  add lab results and update follow-up statuses.
+
+is_active         A database flag (1/0) indicating whether a user account
+                  is currently enabled for login.
+
+RX-XXXXXX        Prescription reference number format (e.g., RX-000042).
+
+INV-XXXXXX       Invoice number format (e.g., INV-000042).
+
+FU-XXXX          Follow-up reference number format (e.g., FU-0042).
+
+#PXXXX           Patient ID display format (e.g., #P0001).
+
+================================================================================
+            CliniCore EHR / EMR Portal -- User Manual v1.0
+            (c) 2026 CliniCore General Hospital. All Rights Reserved.
+            For technical support, contact your system administrator.
+================================================================================

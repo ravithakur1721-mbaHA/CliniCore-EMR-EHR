@@ -5,7 +5,7 @@
 <div class="page-header">
   <div class="page-header-left">
     <h1>Clinical Follow-Up Tracker</h1>
-    <div class="breadcrumb">🏥 CliniCore &rsaquo; Follow-Ups</div>
+    <div class="breadcrumb">CliniCore &rsaquo; Follow-Ups</div>
   </div>
   <div class="page-header-right">
     {% if can('follow_ups.add') %}
@@ -17,7 +17,7 @@
 <!-- FILTER TABS & SUMMARY CARDS -->
 <div class="stats-row mb-16">
   <a href="/follow_ups?status=All{% if doctor_filter %}&doctor={{ doctor_filter }}{% endif %}" class="stat-card" style="text-decoration:none;cursor:pointer;border-top:3px solid var(--blue);">
-    <div class="stat-icon blue">📅</div>
+    <div class="stat-icon blue"><i class="ph ph-clock-countdown" style="font-size:18px;"></i></div>
     <div class="stat-body">
       <div class="stat-value">{{ counts.total }}</div>
       <div class="stat-label">Total Follow-Ups</div>
@@ -26,7 +26,7 @@
   </a>
 
   <a href="/follow_ups?status=Scheduled{% if doctor_filter %}&doctor={{ doctor_filter }}{% endif %}" class="stat-card" style="text-decoration:none;cursor:pointer;border-top:3px solid #0284c7;">
-    <div class="stat-icon teal">🕒</div>
+    <div class="stat-icon teal"><i class="ph ph-clock" style="font-size:18px;"></i></div>
     <div class="stat-body">
       <div class="stat-value">{{ counts.scheduled }}</div>
       <div class="stat-label">Scheduled</div>
@@ -35,7 +35,7 @@
   </a>
 
   <a href="/follow_ups?status=Overdue{% if doctor_filter %}&doctor={{ doctor_filter }}{% endif %}" class="stat-card" style="text-decoration:none;cursor:pointer;border-top:3px solid #dc2626;">
-    <div class="stat-icon red">⚠️</div>
+    <div class="stat-icon red"><i class="ph ph-warning" style="font-size:18px;"></i></div>
     <div class="stat-body">
       <div class="stat-value" style="color:#b91c1c;">{{ counts.overdue }}</div>
       <div class="stat-label">Overdue</div>
@@ -44,7 +44,7 @@
   </a>
 
   <a href="/follow_ups?status=Completed{% if doctor_filter %}&doctor={{ doctor_filter }}{% endif %}" class="stat-card" style="text-decoration:none;cursor:pointer;border-top:3px solid #16a34a;">
-    <div class="stat-icon green">✅</div>
+    <div class="stat-icon green"><i class="ph ph-check-circle" style="font-size:18px;"></i></div>
     <div class="stat-body">
       <div class="stat-value">{{ counts.completed }}</div>
       <div class="stat-label">Completed</div>
@@ -57,7 +57,7 @@
 <div class="panel">
   <div class="panel-header" style="flex-wrap:wrap;gap:12px;">
     <div class="panel-title">
-      <span class="ptitle-icon">📋</span>Follow-Up Schedule
+      <span class="ptitle-icon"><i class="ph ph-clipboard-text"></i></span>Follow-Up Schedule
       <span class="badge badge-gray" style="margin-left:4px;">{{ total_items }} total</span>
     </div>
 
@@ -66,14 +66,14 @@
       <select name="status" class="form-control" style="font-size:12.5px;padding:5px 8px;width:130px;" onchange="this.form.submit()">
         <option value="All" {% if status_filter == 'All' %}selected{% endif %}>All Statuses</option>
         <option value="Scheduled" {% if status_filter == 'Scheduled' %}selected{% endif %}>Scheduled</option>
-        <option value="Overdue" {% if status_filter == 'Overdue' %}selected{% endif %}>⚠️ Overdue</option>
+        <option value="Overdue" {% if status_filter == 'Overdue' %}selected{% endif %}>Overdue</option>
         <option value="Completed" {% if status_filter == 'Completed' %}selected{% endif %}>Completed</option>
         <option value="Cancelled" {% if status_filter == 'Cancelled' %}selected{% endif %}>Cancelled</option>
       </select>
 
       <select name="priority" class="form-control" style="font-size:12.5px;padding:5px 8px;width:125px;" onchange="this.form.submit()">
         <option value="All" {% if priority_filter == 'All' %}selected{% endif %}>All Priorities</option>
-        <option value="Urgent" {% if priority_filter == 'Urgent' %}selected{% endif %}>🚨 Urgent</option>
+        <option value="Urgent" {% if priority_filter == 'Urgent' %}selected{% endif %}>Urgent</option>
         <option value="High" {% if priority_filter == 'High' %}selected{% endif %}>High</option>
         <option value="Normal" {% if priority_filter == 'Normal' %}selected{% endif %}>Normal</option>
       </select>
@@ -82,7 +82,7 @@
         type="text"
         name="q"
         value="{{ q }}"
-        placeholder="🔍 Search patient…"
+        placeholder="Search patient…"
         class="form-control"
         style="width:160px;font-size:12.5px;padding:5px 10px;"
       >
@@ -140,7 +140,7 @@
           </td>
           <td>
             {% if fu.priority == 'Urgent' %}
-            <span class="badge badge-priority-urgent">🚨 Urgent</span>
+            <span class="badge badge-priority-urgent">Urgent</span>
             {% elif fu.priority == 'High' %}
             <span class="badge badge-priority-high">High</span>
             {% else %}
@@ -152,9 +152,9 @@
             {% if fu.status == 'Scheduled' %}
             <span class="badge badge-status-scheduled">Scheduled</span>
             {% elif fu.status == 'Completed' %}
-            <span class="badge badge-status-completed">✓ Completed</span>
+            <span class="badge badge-status-completed">Completed</span>
             {% elif fu.status == 'Overdue' %}
-            <span class="badge badge-status-overdue">⚠️ Overdue</span>
+            <span class="badge badge-status-overdue">Overdue</span>
             {% else %}
             <span class="badge badge-status-cancelled">Cancelled</span>
             {% endif %}
@@ -162,14 +162,14 @@
           <td style="text-align:right;">
             <div style="display:inline-flex;gap:4px;">
               <a href="/follow_up/whatsapp/{{ fu.follow_up_id }}" target="_blank" class="btn btn-secondary btn-xs" title="Send WhatsApp Reminder" style="color:#15803d;font-weight:600;">
-                💬 WA
+                WA
               </a>
               {% if can('follow_ups.edit') %}
                 {% if fu.status != 'Completed' %}
-                <a href="/follow_up/status/{{ fu.follow_up_id }}?new_status=Completed" class="btn btn-secondary btn-xs" title="Mark as Completed" style="color:#15803d;">✓</a>
+                <a href="/follow_up/status/{{ fu.follow_up_id }}?new_status=Completed&csrf={{ csrf_token() }}" class="btn btn-secondary btn-xs" title="Mark as Completed" style="color:#15803d;">✓</a>
                 {% endif %}
                 {% if fu.status != 'Cancelled' and fu.status != 'Completed' %}
-                <a href="/follow_up/status/{{ fu.follow_up_id }}?new_status=Cancelled" class="btn btn-secondary btn-xs" title="Cancel Follow-Up" style="color:#6b7280;">✕</a>
+                <a href="/follow_up/status/{{ fu.follow_up_id }}?new_status=Cancelled&csrf={{ csrf_token() }}" class="btn btn-secondary btn-xs" title="Cancel Follow-Up" style="color:#6b7280;">✕</a>
                 {% endif %}
               {% endif %}
               <a href="/patient/{{ fu.patient_id }}" class="btn btn-secondary btn-xs">Chart</a>
@@ -180,7 +180,7 @@
         <tr>
           <td colspan="8">
             <div class="empty-state">
-              <div class="es-icon">📅</div>
+              <div class="es-icon"><i class="ph ph-clock-countdown" style="font-size:36px;color:#94a3b8;"></i></div>
               <div class="es-msg">No follow-ups match your current filter.</div>
               <div class="es-sub"><a href="/follow_ups">Reset filters</a></div>
             </div>

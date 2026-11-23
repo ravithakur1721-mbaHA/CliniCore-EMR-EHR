@@ -5,14 +5,14 @@
 <div class="page-header">
   <div class="page-header-left">
     <h1>User Management</h1>
-    <div class="breadcrumb">🏥 CliniCore &rsaquo; Admin &rsaquo; Users</div>
+    <div class="breadcrumb">CliniCore &rsaquo; Admin &rsaquo; Users</div>
   </div>
 </div>
 
 <!-- Role Permissions Matrix -->
 <div class="panel mb-16">
   <div class="panel-header">
-    <div class="panel-title"><span class="ptitle-icon">📋</span>Role Permissions Matrix</div>
+    <div class="panel-title"><span class="ptitle-icon"><i class="ph ph-clipboard-text"></i></span>Role Permissions Matrix</div>
     <span class="text-xs text-muted">What each role can do in CliniCore</span>
   </div>
   <div class="panel-body-flush">
@@ -21,13 +21,13 @@
         <tr>
           <th>Permission</th>
           <th style="text-align:center;width:100px;">
-            <span class="badge badge-red">🔑 Admin</span>
+            <span class="badge badge-red">Admin</span>
           </th>
           <th style="text-align:center;width:100px;">
-            <span class="badge badge-blue">🩺 Doctor</span>
+            <span class="badge badge-blue">Doctor</span>
           </th>
           <th style="text-align:center;width:100px;">
-            <span class="badge badge-teal">👩‍⚕️ Nurse</span>
+            <span class="badge badge-teal">Nurse</span>
           </th>
         </tr>
       </thead>
@@ -73,7 +73,7 @@
   <div class="panel">
     <div class="panel-header">
       <div class="panel-title">
-        <span class="ptitle-icon">🔐</span>System Users
+        <span class="ptitle-icon"><i class="ph ph-shield-check"></i></span>System Users
         <span class="badge badge-gray" style="margin-left:4px;">{{ users|length }}</span>
       </div>
     </div>
@@ -105,30 +105,30 @@
             </td>
             <td>
               <span class="badge {{ 'badge-red' if u.role == 'Admin' else ('badge-blue' if u.role == 'Doctor' else 'badge-teal') }}">
-                {{ '🔑' if u.role == 'Admin' else ('🩺' if u.role == 'Doctor' else '👩‍⚕️') }} {{ u.role }}
+                {{ 'Admin' if u.role == 'Admin' else ('Doctor' if u.role == 'Doctor' else 'Nurse') }} {{ u.role }}
               </span>
             </td>
             <td>
               {% if u.is_active %}
-              <span class="badge badge-green">🟢 Active</span>
+              <span class="badge badge-green">Active</span>
               {% else %}
-              <span class="badge badge-gray">⚫ Inactive</span>
+              <span class="badge badge-gray">Inactive</span>
               {% endif %}
             </td>
             <td>
               <div style="display:flex;gap:5px;">
-                {% if u.user_id != 1 %}
-                <a href="/admin/users/toggle/{{ u.user_id }}"
-                   class="btn btn-secondary btn-xs"
-                   title="{{ 'Deactivate' if u.is_active else 'Activate' }} user"
-                   onclick="return confirm('{{ 'Deactivate' if u.is_active else 'Activate' }} {{ u.username }}?')">
-                  {{ '⏸️' if u.is_active else '▶️' }}
-                </a>
-                <a href="/admin/users/delete/{{ u.user_id }}"
-                   class="btn btn-danger btn-xs"
-                   onclick="return confirm('Permanently delete user {{ u.username }}?')">
-                  🗑️
-                </a>
+                 {% if u.user_id != 1 %}
+                 <a href="/admin/users/toggle/{{ u.user_id }}?csrf={{ csrf_token() }}"
+                    class="btn btn-secondary btn-xs"
+                    title="{{ 'Deactivate' if u.is_active else 'Activate' }} user"
+                    onclick="return confirm('{{ 'Deactivate' if u.is_active else 'Activate' }} {{ u.username }}?')">
+                   {{ '⏸️' if u.is_active else '▶️' }}
+                 </a>
+                 <a href="/admin/users/delete/{{ u.user_id }}?csrf={{ csrf_token() }}"
+                    class="btn btn-danger btn-xs"
+                    onclick="return confirm('Permanently delete user {{ u.username }}?')">
+                   Delete
+                 </a>
                 {% else %}
                 <span class="text-xs text-muted" style="padding:4px 8px;">Protected</span>
                 {% endif %}
@@ -144,14 +144,15 @@
   <!-- Add user form -->
   <div class="panel">
     <div class="panel-header">
-      <div class="panel-title"><span class="ptitle-icon">➕</span>Create New User</div>
+      <div class="panel-title"><span class="ptitle-icon"><i class="ph ph-plus"></i></span>Create New User</div>
     </div>
     <div class="panel-body">
       {% if error %}
-      <div class="alert alert-error">❌ {{ error }}</div>
+      <div class="alert alert-error"><i class="ph ph-x-circle"></i> {{ error }}</div>
       {% endif %}
 
       <form method="POST" action="/admin/users/add">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group" style="margin-bottom:12px;">
           <label class="form-label" for="new-username">Username</label>
           <input class="form-control" type="text" id="new-username" name="username"
@@ -168,9 +169,9 @@
         <div class="form-group" style="margin-bottom:16px;">
           <label class="form-label" for="new-role">Role</label>
           <select class="form-control" id="new-role" name="role">
-            <option value="Doctor">🩺 Doctor — Clinical access</option>
-            <option value="Nurse">👩‍⚕️ Nurse — Lab entry only</option>
-            <option value="Admin">🔑 Admin — Full access</option>
+            <option value="Doctor">Doctor — Clinical access</option>
+            <option value="Nurse">Nurse — Lab entry only</option>
+            <option value="Admin">Admin — Full access</option>
           </select>
         </div>
 
@@ -180,7 +181,7 @@
         </div>
 
         <button type="submit" class="btn btn-primary w-full" style="justify-content:center;">
-          ➕ Create User Account
+          Create User Account
         </button>
       </form>
     </div>

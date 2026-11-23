@@ -5,17 +5,18 @@
 <div class="page-header">
   <div class="page-header-left">
     <h1>Record Patient Visit</h1>
-    <div class="breadcrumb">🏥 CliniCore &rsaquo; <a href="/visits">Visits</a> &rsaquo; Add Visit Encounter</div>
+    <div class="breadcrumb">CliniCore &rsaquo; <a href="/visits">Visits</a> &rsaquo; Add Visit Encounter</div>
   </div>
 </div>
 
 <div class="form-card" style="max-width:720px;">
   <div class="form-card-header">
-    <div class="fch-title">🗓️ Record New Visit Encounter</div>
+    <div class="fch-title">Record New Visit Encounter</div>
     <div class="fch-sub">Select registered patient, consultation date, and attending doctor.</div>
   </div>
 
   <form method="POST" action="/visits/add">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-body">
 
       <!-- Patient Selection with Instant Search Filter -->
@@ -29,7 +30,7 @@
           type="text" 
           id="patient-filter-input" 
           class="form-control mb-8" 
-          placeholder="🔍 Type patient name, phone, or ID to quickly find…"
+          placeholder="Search by name, phone or ID…"
           style="font-size:12.5px;padding:6px 12px;"
           autocomplete="off"
         >
@@ -37,7 +38,7 @@
         <select class="form-control" id="patient_id" name="patient_id" required size="7" style="height:auto;font-size:13px;padding:6px;">
           {% for p in patients %}
           <option value="{{ p.patient_id }}" {% if default_pid and default_pid|int == p.patient_id %}selected{% endif %}>
-            #P{{ '%04d' % p.patient_id }} — {{ p.name }} ({{ p.age }}y, {{ p.gender }}) · 📞 {{ p.contact }}
+            #P{{ '%04d' % p.patient_id }} — {{ p.name }} ({{ p.age }}y, {{ p.gender }}) · {{ p.contact }}
           </option>
           {% endfor %}
         </select>
@@ -75,7 +76,7 @@
     </div>
 
     <div class="form-actions">
-      <button type="submit" class="btn btn-primary">✅ Record Visit Encounter</button>
+      <button type="submit" class="btn btn-primary">Record Visit Encounter</button>
       <a href="/visits" class="btn btn-secondary">Cancel</a>
     </div>
   </form>

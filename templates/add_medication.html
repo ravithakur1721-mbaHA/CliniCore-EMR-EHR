@@ -5,17 +5,18 @@
 <div class="page-header">
   <div class="page-header-left">
     <h1>Prescribe Medication</h1>
-    <div class="breadcrumb">🏥 CliniCore &rsaquo; <a href="/medications">Medications</a> &rsaquo; Prescribe</div>
+    <div class="breadcrumb">CliniCore &rsaquo; <a href="/medications">Medications</a> &rsaquo; Prescribe</div>
   </div>
 </div>
 
 <div style="max-width:680px;">
   <div class="panel">
     <div class="panel-header">
-      <div class="panel-title"><span class="ptitle-icon">💊</span>Prescription Entry</div>
+      <div class="panel-title"><span class="ptitle-icon"><i class="ph ph-pill"></i></span>Prescription Entry</div>
     </div>
     <div class="panel-body">
       <form method="POST" action="/medications/add">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-grid" style="margin-bottom:16px;">
           <div class="form-group">
             <label class="form-label" for="visit_id">Visit <span style="color:#b91c1c">*</span></label>
@@ -44,7 +45,7 @@
         </div>
         <div class="form-actions">
           <a href="/medications" class="btn btn-secondary">Cancel</a>
-          <button type="submit" class="btn btn-primary">💊 Prescribe</button>
+          <button type="submit" class="btn btn-primary">Prescribe</button>
         </div>
       </form>
     </div>

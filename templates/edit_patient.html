@@ -5,7 +5,7 @@
 <div class="page-header">
   <div class="page-header-left">
     <h1>Edit Patient Record</h1>
-    <div class="breadcrumb">🏥 CliniCore &rsaquo; <a href="/patients">Patients</a> &rsaquo; Edit #P{{ '%04d' % patient.patient_id }}</div>
+    <div class="breadcrumb">CliniCore &rsaquo; <a href="/patients">Patients</a> &rsaquo; Edit #P{{ '%04d' % patient.patient_id }}</div>
   </div>
 </div>
 
@@ -21,6 +21,7 @@
     </div>
     <div class="panel-body">
       <form method="POST" action="/edit_patient/{{ patient.patient_id }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-grid" style="margin-bottom:16px;">
           <div class="form-group" style="grid-column:1/-1;">
             <label class="form-label" for="name">Full Name</label>
@@ -48,7 +49,7 @@
         </div>
         <div class="form-actions">
           <a href="/patients" class="btn btn-secondary">Cancel</a>
-          <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
         </div>
       </form>
     </div>

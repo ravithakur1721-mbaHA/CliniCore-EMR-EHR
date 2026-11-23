@@ -5,14 +5,14 @@
 <div class="page-header">
   <div class="page-header-left">
     <h1>Patient Chart</h1>
-    <div class="breadcrumb">🏥 CliniCore &rsaquo; <a href="/patients">Patients</a> &rsaquo; {{ patient.name }}</div>
+    <div class="breadcrumb">CliniCore &rsaquo; <a href="/patients">Patients</a> &rsaquo; {{ patient.name }}</div>
   </div>
   <div class="page-header-right">
     {% if can('follow_ups.add') %}
-    <a href="/follow_ups/add?patient_id={{ patient.patient_id }}" class="btn btn-secondary btn-sm">📅 Schedule Follow-Up</a>
+    <a href="/follow_ups/add?patient_id={{ patient.patient_id }}" class="btn btn-secondary btn-sm">Schedule Follow-Up</a>
     {% endif %}
     {% if can('patients.edit') %}
-    <a href="/edit_patient/{{ patient.patient_id }}" class="btn btn-secondary btn-sm">✏️ Edit</a>
+    <a href="/edit_patient/{{ patient.patient_id }}" class="btn btn-secondary btn-sm">Edit</a>
     {% endif %}
     {% if can('visits.add') %}
     <a href="/visits/add?patient_id={{ patient.patient_id }}" class="btn btn-primary btn-sm">+ Add Visit</a>
@@ -69,7 +69,7 @@
 {% if follow_ups %}
 <div class="panel mb-16" style="border-left:4px solid var(--blue);">
   <div class="panel-header">
-    <div class="panel-title"><span class="ptitle-icon">📅</span>Clinical Follow-Up Care Plan</div>
+    <div class="panel-title"><span class="ptitle-icon"><i class="ph ph-clock-countdown"></i></span>Clinical Follow-Up Care Plan</div>
     {% if can('follow_ups.add') %}
     <a href="/follow_ups/add?patient_id={{ patient.patient_id }}" class="btn btn-secondary btn-xs">+ Schedule Next</a>
     {% endif %}
@@ -96,7 +96,7 @@
           <td style="font-weight:500;">{{ fu.follow_up_type }}</td>
           <td>
             {% if fu.priority == 'Urgent' %}
-            <span class="badge badge-priority-urgent">🚨 Urgent</span>
+            <span class="badge badge-priority-urgent">Urgent</span>
             {% elif fu.priority == 'High' %}
             <span class="badge badge-priority-high">High</span>
             {% else %}
@@ -109,18 +109,18 @@
             {% if fu.status == 'Scheduled' %}
             <span class="badge badge-status-scheduled">Scheduled</span>
             {% elif fu.status == 'Completed' %}
-            <span class="badge badge-status-completed">✓ Completed</span>
+            <span class="badge badge-status-completed">Completed</span>
             {% elif fu.status == 'Overdue' %}
-            <span class="badge badge-status-overdue">⚠️ Overdue</span>
+            <span class="badge badge-status-overdue">Overdue</span>
             {% else %}
             <span class="badge badge-status-cancelled">Cancelled</span>
             {% endif %}
           </td>
           <td style="text-align:right;">
             <div style="display:inline-flex;gap:4px;">
-              <a href="/follow_up/whatsapp/{{ fu.follow_up_id }}" target="_blank" class="btn btn-secondary btn-xs" title="Send WhatsApp Reminder" style="color:#15803d;font-weight:600;">💬 WA</a>
+              <a href="/follow_up/whatsapp/{{ fu.follow_up_id }}" target="_blank" class="btn btn-secondary btn-xs" title="Send WhatsApp Reminder" style="color:#15803d;font-weight:600;">WA</a>
               {% if can('follow_ups.edit') and fu.status != 'Completed' %}
-              <a href="/follow_up/status/{{ fu.follow_up_id }}?new_status=Completed&redirect=chart" class="btn btn-secondary btn-xs" title="Mark as Completed" style="color:#15803d;">✓ Done</a>
+              <a href="/follow_up/status/{{ fu.follow_up_id }}?new_status=Completed&redirect=chart&csrf={{ csrf_token() }}" class="btn btn-secondary btn-xs" title="Mark as Completed" style="color:#15803d;">✓ Done</a>
               {% endif %}
             </div>
           </td>
@@ -137,7 +137,7 @@
     <!-- Visits -->
     <div class="panel mb-16">
       <div class="panel-header">
-        <div class="panel-title"><span class="ptitle-icon">🗓️</span>Visit History</div>
+        <div class="panel-title"><span class="ptitle-icon"><i class="ph ph-calendar"></i></span>Visit History</div>
         {% if can('visits.add') %}
         <a href="/visits/add?patient_id={{ patient.patient_id }}" class="btn btn-secondary btn-xs">+ Add</a>
         {% endif %}
@@ -155,9 +155,9 @@
               <td>{{ v.doctor_name }}</td>
               <td style="text-align:right;">
                 <div style="display:inline-flex;gap:4px;">
-                  <a href="/prescription/{{ v.visit_id }}" target="_blank" class="btn btn-secondary btn-xs" title="Print Prescription">🖨️ Rx</a>
-                  <a href="/bill/visit/{{ v.visit_id }}" target="_blank" class="btn btn-secondary btn-xs" title="View & Print Bill">🧾 Bill</a>
-                  <a href="/prescription/whatsapp/{{ v.visit_id }}" target="_blank" class="btn btn-secondary btn-xs" title="Send Prescription & Bill via WhatsApp" style="color:#15803d;font-weight:600;">💬 WA</a>
+                  <a href="/prescription/{{ v.visit_id }}" target="_blank" class="btn btn-secondary btn-xs" title="Print Prescription">Rx</a>
+                  <a href="/bill/visit/{{ v.visit_id }}" target="_blank" class="btn btn-secondary btn-xs" title="View & Print Bill">Bill</a>
+                  <a href="/prescription/whatsapp/{{ v.visit_id }}" target="_blank" class="btn btn-secondary btn-xs" title="Send Prescription & Bill via WhatsApp" style="color:#15803d;font-weight:600;">WA</a>
                 </div>
               </td>
             </tr>
@@ -172,7 +172,7 @@
     <!-- Diagnoses -->
     <div class="panel mb-16">
       <div class="panel-header">
-        <div class="panel-title"><span class="ptitle-icon">🩺</span>Diagnoses</div>
+        <div class="panel-title"><span class="ptitle-icon"><i class="ph ph-stethoscope"></i></span>Diagnoses</div>
         {% if can('diagnoses.add') %}
         <a href="/diagnoses/add" class="btn btn-secondary btn-xs">+ Add</a>
         {% endif %}
@@ -201,7 +201,7 @@
     <!-- Lab Results -->
     <div class="panel mb-16">
       <div class="panel-header">
-        <div class="panel-title"><span class="ptitle-icon">🧪</span>Lab Results</div>
+        <div class="panel-title"><span class="ptitle-icon"><i class="ph ph-flask"></i></span>Lab Results</div>
         {% if can('labs.add') %}
         <a href="/lab_results/add" class="btn btn-secondary btn-xs">+ Add</a>
         {% endif %}
@@ -224,7 +224,7 @@
     <!-- Medications -->
     <div class="panel">
       <div class="panel-header">
-        <div class="panel-title"><span class="ptitle-icon">💊</span>Medications</div>
+        <div class="panel-title"><span class="ptitle-icon"><i class="ph ph-pill"></i></span>Medications</div>
         {% if can('medications.add') %}
         <a href="/medications/add" class="btn btn-secondary btn-xs">+ Prescribe</a>
         {% endif %}

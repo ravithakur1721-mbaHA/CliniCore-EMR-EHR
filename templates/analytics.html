@@ -5,35 +5,35 @@
 <div class="page-header">
   <div class="page-header-left">
     <h1>Reports &amp; Analytics</h1>
-    <div class="breadcrumb">🏥 CliniCore &rsaquo; Analytics</div>
+    <div class="breadcrumb">CliniCore &rsaquo; Analytics</div>
   </div>
 </div>
 
 <!-- Summary stats -->
 <div class="stats-row" style="margin-bottom:20px;">
   <div class="stat-card">
-    <div class="stat-icon blue">👥</div>
+    <div class="stat-icon blue"><i class="ph ph-users" style="font-size:18px;"></i></div>
     <div class="stat-body">
       <div class="stat-value">{{ stats.patients }}</div>
       <div class="stat-label">Total Patients</div>
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-icon teal">🗓️</div>
+    <div class="stat-icon teal"><i class="ph ph-calendar" style="font-size:18px;"></i></div>
     <div class="stat-body">
       <div class="stat-value">{{ stats.visits }}</div>
       <div class="stat-label">Total Visits</div>
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-icon green">🎂</div>
+    <div class="stat-icon green"><i class="ph ph-cake" style="font-size:18px;"></i></div>
     <div class="stat-body">
       <div class="stat-value">{{ stats.avg_age }}</div>
       <div class="stat-label">Average Age</div>
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-icon amber">🩺</div>
+    <div class="stat-icon amber"><i class="ph ph-stethoscope" style="font-size:18px;"></i></div>
     <div class="stat-body">
       <div class="stat-value">{{ stats.diagnoses }}</div>
       <div class="stat-label">Diagnoses</div>
@@ -45,7 +45,7 @@
   <!-- Disease burden -->
   <div class="panel">
     <div class="panel-header">
-      <div class="panel-title"><span class="ptitle-icon">🩺</span>Disease Burden</div>
+      <div class="panel-title"><span class="ptitle-icon"><i class="ph ph-stethoscope"></i></span>Disease Burden</div>
       <span class="text-xs text-muted">by diagnosis count</span>
     </div>
     <div class="panel-body">
@@ -72,7 +72,7 @@
     <!-- Gender distribution -->
     <div class="panel mb-16">
       <div class="panel-header">
-        <div class="panel-title"><span class="ptitle-icon">📊</span>Gender Distribution</div>
+        <div class="panel-title"><span class="ptitle-icon"><i class="ph ph-chart-bar"></i></span>Gender Distribution</div>
       </div>
       <div class="panel-body">
         {% for g in gender_dist %}
@@ -80,7 +80,7 @@
         <div style="margin-bottom:14px;">
           <div class="flex-between mb-4">
             <div style="display:flex;align-items:center;gap:6px;">
-              <span style="font-size:14px;">{{ '♂' if g.gender == 'Male' else '♀' }}</span>
+              <span style="font-size:14px;">{{ g.gender }}</span>
               <span style="font-size:13px;font-weight:500;">{{ g.gender }}</span>
             </div>
             <span style="font-size:13px;font-weight:700;">{{ g.count }} <span class="text-muted text-xs">({{ pct }}%)</span></span>
@@ -96,7 +96,7 @@
     <!-- Age distribution -->
     <div class="panel">
       <div class="panel-header">
-        <div class="panel-title"><span class="ptitle-icon">🎂</span>Age Groups</div>
+        <div class="panel-title"><span class="ptitle-icon"><i class="ph ph-chart-pie"></i></span>Age Groups</div>
       </div>
       <div class="panel-body">
         {% for ag in age_groups %}
@@ -119,7 +119,7 @@
 <!-- Most prescribed drugs -->
 <div class="panel mt-16">
   <div class="panel-header">
-    <div class="panel-title"><span class="ptitle-icon">💊</span>Most Prescribed Medications</div>
+    <div class="panel-title"><span class="ptitle-icon"><i class="ph ph-pill"></i></span>Most Prescribed Medications</div>
   </div>
   <div class="panel-body-flush">
     <table class="data-table">

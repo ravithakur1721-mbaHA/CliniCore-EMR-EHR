@@ -5,7 +5,7 @@
 <div class="page-header">
   <div class="page-header-left">
     <h1>Clinical Diagnoses</h1>
-    <div class="breadcrumb">🏥 CliniCore &rsaquo; Diagnoses</div>
+    <div class="breadcrumb">CliniCore &rsaquo; Diagnoses</div>
   </div>
   <div class="page-header-right">
     {% if can('diagnoses.add') %}
@@ -17,7 +17,7 @@
 <div class="panel">
   <div class="panel-header" style="flex-wrap:wrap;gap:12px;">
     <div class="panel-title">
-      <span class="ptitle-icon">🩺</span>All Diagnoses
+      <span class="ptitle-icon"><i class="ph ph-stethoscope"></i></span>All Diagnoses
       <span class="badge badge-gray" style="margin-left:4px;">{{ total_items }} total</span>
     </div>
 
@@ -27,7 +27,7 @@
         type="text"
         name="q"
         value="{{ q or '' }}"
-        placeholder="🔍 Search disease, patient…"
+        placeholder="Search disease, patient…"
         class="form-control"
         style="width:220px;padding:5px 10px;font-size:12.5px;"
       >
@@ -63,7 +63,7 @@
           </td>
           <td class="td-id">#V{{ '%04d' % d.visit_id }}</td>
           <td>
-            <span class="badge badge-amber" style="font-size:12px;">🩺 {{ d.disease_name }}</span>
+            <span class="badge badge-amber" style="font-size:12px;">{{ d.disease_name }}</span>
           </td>
           <td style="text-align:right;">
             <a href="/patient/{{ d.patient_id }}" class="btn btn-secondary btn-xs">Chart</a>
@@ -72,7 +72,7 @@
         {% else %}
         <tr><td colspan="5">
           <div class="empty-state">
-            <div class="es-icon">🩺</div>
+            <div class="es-icon"><i class="ph ph-stethoscope" style="font-size:36px;color:#94a3b8;"></i></div>
             <div class="es-msg">No diagnoses found.</div>
             <div class="es-sub"><a href="/diagnoses/add">Add diagnosis</a></div>
           </div>

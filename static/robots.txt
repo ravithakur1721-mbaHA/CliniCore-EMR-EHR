@@ -1,0 +1,23 @@
+# CliniCore EHR Robots Exclusion File
+# HIPAA / Medical Privacy: Internal clinical records and patient data are strictly excluded from indexing.
+
+User-agent: *
+Allow: /login
+Allow: /static/
+Disallow: /patients
+Disallow: /patient/
+Disallow: /visits
+Disallow: /diagnoses
+Disallow: /lab_results
+Disallow: /medications
+Disallow: /ehr
+Disallow: /follow_ups
+Disallow: /analytics
+Disallow: /admin/
+Disallow: /prescription/
+Disallow: /bill/
+Disallow: /logout
+Disallow: /edit_patient/
+Disallow: /delete_patient/
+
+Sitemap: /sitemap.xml

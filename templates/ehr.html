@@ -5,7 +5,7 @@
 <div class="page-header">
   <div class="page-header-left">
     <h1>Full Clinical Records</h1>
-    <div class="breadcrumb">🏥 CliniCore &rsaquo; Clinical Records</div>
+    <div class="breadcrumb">CliniCore &rsaquo; Clinical Records</div>
   </div>
   <div class="page-header-right">
     <span class="text-muted text-sm">{{ total_items }} integrated record{{ 's' if total_items != 1 else '' }}</span>
@@ -25,7 +25,7 @@
       <span class="badge badge-blue" style="font-size:10.5px;">#V{{ '%04d' % r.visit_id if r.visit_id else '' }}</span>
       <a href="/patient/{{ r.patient_id }}" class="btn btn-secondary btn-xs" style="border-color:rgba(255,255,255,.15);color:#e2e8f0;background:rgba(255,255,255,.06);">Full Chart</a>
       {% if r.visit_id %}
-      <a href="/prescription/{{ r.visit_id }}" target="_blank" class="btn btn-secondary btn-xs" style="border-color:rgba(255,255,255,.15);color:#e2e8f0;background:rgba(255,255,255,.06);" title="Print Prescription">🖨️ Rx</a>
+      <a href="/prescription/{{ r.visit_id }}" target="_blank" class="btn btn-secondary btn-xs" style="border-color:rgba(255,255,255,.15);color:#e2e8f0;background:rgba(255,255,255,.06);" title="Print Prescription">Rx</a>
       {% endif %}
     </div>
   </div>
@@ -66,7 +66,7 @@
 <div class="panel">
   <div class="panel-body">
     <div class="empty-state">
-      <div class="es-icon">📋</div>
+      <div class="es-icon"><i class="ph ph-clipboard-text" style="font-size:36px;color:#94a3b8;"></i></div>
       <div class="es-msg">No complete EHR records yet.</div>
       <div class="es-sub">Records appear once a patient has a visit, diagnosis, lab result, and medication.</div>
     </div>

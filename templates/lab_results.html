@@ -5,7 +5,7 @@
 <div class="page-header">
   <div class="page-header-left">
     <h1>Laboratory Results</h1>
-    <div class="breadcrumb">🏥 CliniCore &rsaquo; Lab Results</div>
+    <div class="breadcrumb">CliniCore &rsaquo; Lab Results</div>
   </div>
   <div class="page-header-right">
     {% if can('labs.add') %}
@@ -17,7 +17,7 @@
 <div class="panel">
   <div class="panel-header" style="flex-wrap:wrap;gap:12px;">
     <div class="panel-title">
-      <span class="ptitle-icon">🧪</span>All Lab Results
+      <span class="ptitle-icon"><i class="ph ph-flask"></i></span>All Lab Results
       <span class="badge badge-gray" style="margin-left:4px;">{{ total_items }} total</span>
     </div>
 
@@ -27,7 +27,7 @@
         type="text"
         name="q"
         value="{{ q or '' }}"
-        placeholder="🔍 Search test, patient…"
+        placeholder="Search test, patient…"
         class="form-control"
         style="width:220px;padding:5px 10px;font-size:12.5px;"
       >
@@ -76,7 +76,7 @@
         {% else %}
         <tr><td colspan="6">
           <div class="empty-state">
-            <div class="es-icon">🧪</div>
+            <div class="es-icon"><i class="ph ph-flask" style="font-size:36px;color:#94a3b8;"></i></div>
             <div class="es-msg">No lab results found.</div>
             <div class="es-sub"><a href="/lab_results/add">Record lab result</a></div>
           </div>

@@ -136,9 +136,10 @@ JOIN medications m ON v.visit_id = m.visit_id;
 
 CREATE TABLE users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50),
-    password VARCHAR(50),
-    role VARCHAR(20)
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL,
+    is_active TINYINT(1) DEFAULT 1
 );
 
 INSERT INTO users (username, password, role)

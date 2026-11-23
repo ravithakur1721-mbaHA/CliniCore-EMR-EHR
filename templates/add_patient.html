@@ -5,21 +5,22 @@
 <div class="page-header">
   <div class="page-header-left">
     <h1>Register New Patient</h1>
-    <div class="breadcrumb">🏥 CliniCore &rsaquo; <a href="/patients">Patients</a> &rsaquo; Register</div>
+    <div class="breadcrumb">CliniCore &rsaquo; <a href="/patients">Patients</a> &rsaquo; Register</div>
   </div>
 </div>
 
 <div style="max-width:680px;">
   <div class="panel">
     <div class="panel-header">
-      <div class="panel-title"><span class="ptitle-icon">➕</span>Patient Demographics</div>
+      <div class="panel-title"><span class="ptitle-icon"><i class="ph ph-plus"></i></span>Patient Demographics</div>
     </div>
     <div class="panel-body">
       {% if error %}
-      <div class="alert alert-error">❌ {{ error }}</div>
+      <div class="alert alert-error"><i class="ph ph-x-circle"></i> {{ error }}</div>
       {% endif %}
 
       <form method="POST" action="/patients/add" id="add-patient-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-grid" style="margin-bottom:16px;">
           <div class="form-group" style="grid-column:1/-1;">
             <label class="form-label" for="name">Full Name <span style="color:#b91c1c">*</span></label>
@@ -57,7 +58,7 @@
         <div class="form-actions">
           <a href="/patients" class="btn btn-secondary">Cancel</a>
           <button type="submit" class="btn btn-primary" id="submit-btn">
-            ✅ Register Patient
+            Register Patient
           </button>
         </div>
       </form>
