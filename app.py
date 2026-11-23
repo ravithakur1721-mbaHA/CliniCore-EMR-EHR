@@ -346,6 +346,12 @@ def inject_globals():
 # SEO & Static Discovery
 # ═══════════════════════════════════════════════════════════════
 
+@app.route("/static/<path:filename>")
+def static_files(filename):
+    static_dir = os.path.join(app.root_path, "static")
+    return send_from_directory(static_dir, filename)
+
+
 @app.route("/robots.txt")
 def robots_txt():
     return send_from_directory(app.static_folder, "robots.txt", mimetype="text/plain")
