@@ -1,5 +1,5 @@
 import os
-import mysql.connector
+import urllib.parse
 
 try:
     from dotenv import load_dotenv
@@ -20,24 +20,113 @@ ALLOWED_TABLES = frozenset({
 })
 
 
+def get_db_params():
+    """
+    Parse database connection parameters from environment.
+    Supports standard cloud DATABASE_URL / MYSQL_URL connection strings
+    as well as individual environment variables (MYSQL_* or DB_*).
+    """
+    raw_url = os.environ.get("DATABASE_URL") or os.environ.get("MYSQL_URL")
+    if raw_url:
+        p = urllib.parse.urlparse(raw_url)
+        params = {
+            "host": p.hostname or "localhost",
+            "user": p.username or "root",
+            "password": p.password or "",
+            "database": p.path.lstrip("/") or "ehrs",
+            "port": p.port or 3306,
+        }
+        # Detect cloud SSL parameters in connection string
+        query = p.query.lower()
+        if "ssl" in query or "require" in query:
+            params["ssl_disabled"] = False
+        return params
+
+    return {
+        "host": os.environ.get("MYSQL_HOST") or os.environ.get("DB_HOST") or "localhost",
+        "user": os.environ.get("MYSQL_USER") or os.environ.get("DB_USER") or "root",
+        "password": os.environ.get("MYSQL_PASSWORD") or os.environ.get("DB_PASSWORD") or "ravi1804",
+        "database": os.environ.get("MYSQL_DATABASE") or os.environ.get("DB_NAME") or "ehrs",
+        "port": int(os.environ.get("MYSQL_PORT") or os.environ.get("DB_PORT") or 3306),
+    }
+
+
 def get_connection():
     """
-    Establish a secure connection to MySQL database.
-    Reads credentials from environment variables with safe defaults.
-    Supports both MYSQL_* and DB_* environment variables.
+    Establish a secure MySQL database connection.
+    Primary driver: mysql.connector.
+    Fallback driver: pymysql (pure Python, recommended for serverless/Vercel).
     """
-    host = os.environ.get("MYSQL_HOST") or os.environ.get("DB_HOST") or "localhost"
-    user = os.environ.get("MYSQL_USER") or os.environ.get("DB_USER") or "root"
-    password = os.environ.get("MYSQL_PASSWORD") or os.environ.get("DB_PASSWORD") or "ravi1804"
-    database = os.environ.get("MYSQL_DATABASE") or os.environ.get("DB_NAME") or "ehrs"
-    port = int(os.environ.get("MYSQL_PORT") or os.environ.get("DB_PORT") or 3306)
+    params = get_db_params()
 
+    # Attempt 1: mysql.connector
+    try:
+        import mysql.connector
+        connect_args = {
+            "host": params["host"],
+            "user": params["user"],
+            "password": params["password"],
+            "database": params["database"],
+            "port": params["port"],
+            "autocommit": False,
+        }
+        if "ssl_disabled" in params:
+            connect_args["ssl_disabled"] = params["ssl_disabled"]
+
+        return mysql.connector.connect(**connect_args)
+    except ImportError:
+        pass
+    except Exception as e:
+        # If mysql.connector failed, try pymysql fallback if available
+        pass
+
+    # Attempt 2: pymysql fallback (pure-Python for serverless environments)
+    try:
+        import pymysql
+        import pymysql.cursors
+
+        class PyMySQLWrapper:
+            """Wrapper providing interface parity with mysql.connector for dictionary cursors."""
+            def __init__(self, raw_conn):
+                self._conn = raw_conn
+
+            def cursor(self, dictionary=False):
+                if dictionary:
+                    return self._conn.cursor(pymysql.cursors.DictCursor)
+                return self._conn.cursor()
+
+            def commit(self):
+                return self._conn.commit()
+
+            def rollback(self):
+                return self._conn.rollback()
+
+            def close(self):
+                return self._conn.close()
+
+            def __getattr__(self, name):
+                return getattr(self._conn, name)
+
+        raw = pymysql.connect(
+            host=params["host"],
+            user=params["user"],
+            password=params["password"],
+            database=params["database"],
+            port=params["port"],
+            autocommit=False,
+        )
+        return PyMySQLWrapper(raw)
+    except ImportError:
+        pass
+
+    # If neither succeeded, raise the primary connector connection attempt
+    import mysql.connector
     return mysql.connector.connect(
-        host=host,
-        user=user,
-        password=password,
-        database=database,
-        port=port,
+        host=params["host"],
+        user=params["user"],
+        password=params["password"],
+        database=params["database"],
+        port=params["port"],
         autocommit=False,
     )
 
@@ -53,7 +142,6 @@ def get_table_data(table_name):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Table name is verified against static frozen set
     query = f"SELECT * FROM `{table_name}`"
     cursor.execute(query)
 

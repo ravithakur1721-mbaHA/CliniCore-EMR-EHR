@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ error_code or "Error" }} — CliniCore EHR{% endblock %}
+{% block content %}
+<div style="min-height:60vh;display:flex;align-items:center;justify-content:center;padding:24px;">
+  <div class="panel" style="max-width:480px;width:100%;text-align:center;padding:36px 28px;">
+    <div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.1);color:#ef4444;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 16px;">
+      <i class="ph {{ error_icon or 'ph-warning-circle' }}"></i>
+    </div>
+    <div style="font-size:13px;font-weight:600;letter-spacing:0.05em;color:#ef4444;text-transform:uppercase;margin-bottom:6px;">
+      {{ error_code or "Notice" }}
+    </div>
+    <h2 style="font-size:20px;font-weight:600;color:var(--gray-900);margin-bottom:8px;">{{ error_title or "An unexpected event occurred" }}</h2>
+    <p style="font-size:13.5px;color:var(--gray-600);margin-bottom:24px;line-height:1.5;">{{ error_message or "Please verify your request or return to the main dashboard." }}</p>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <a href="/" class="btn btn-primary btn-sm">Return to Dashboard</a>
+      <a href="javascript:history.back()" class="btn btn-secondary btn-sm">Go Back</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
