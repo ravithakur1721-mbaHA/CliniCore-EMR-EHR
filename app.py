@@ -278,10 +278,20 @@ def login_required(fn):
 
 _STATS_CACHE = {"data": None, "time": 0}
 _SIDEBAR_CACHE = {"counts": (0, 0), "time": 0}
+_DASHBOARD_CACHE = {"data": None, "time": 0}
+
+def invalidate_caches():
+    """Clear in-memory caches whenever write operations occur."""
+    _STATS_CACHE["data"] = None
+    _STATS_CACHE["time"] = 0
+    _SIDEBAR_CACHE["counts"] = (0, 0)
+    _SIDEBAR_CACHE["time"] = 0
+    _DASHBOARD_CACHE["data"] = None
+    _DASHBOARD_CACHE["time"] = 0
 
 def get_stats():
     now = time.time()
-    if _STATS_CACHE["data"] is not None and (now - _STATS_CACHE["time"] < 15):
+    if _STATS_CACHE["data"] is not None and (now - _STATS_CACHE["time"] < 60):
         return _STATS_CACHE["data"]
 
     stats = {
@@ -318,9 +328,9 @@ def get_stats():
 
 
 def get_sidebar_counts():
-    """Single query to fetch sidebar counts with 20s TTL cache."""
+    """Single query to fetch sidebar counts with 60s TTL cache."""
     now = time.time()
-    if now - _SIDEBAR_CACHE["time"] < 20:
+    if now - _SIDEBAR_CACHE["time"] < 60:
         return _SIDEBAR_CACHE["counts"]
     try:
         conn = get_connection()
@@ -485,6 +495,17 @@ def logout():
 @app.route("/")
 @login_required
 def index():
+    now = time.time()
+    if _DASHBOARD_CACHE["data"] is not None and (now - _DASHBOARD_CACHE["time"] < 60):
+        cached = _DASHBOARD_CACHE["data"]
+        return render_template(
+            "index.html",
+            stats=get_stats(),
+            recent_patients=cached["recent_patients"],
+            gender_dist=cached["gender_dist"],
+            common_diseases=cached["common_diseases"],
+        )
+
     recent_patients = []
     gender_dist = []
     common_diseases = []
@@ -501,7 +522,22 @@ def index():
         """)
         common_diseases = list(enumerate(cur.fetchall()))
         cur.close(); conn.close()
+        _DASHBOARD_CACHE["data"] = {
+            "recent_patients": recent_patients,
+            "gender_dist": gender_dist,
+            "common_diseases": common_diseases,
+        }
+        _DASHBOARD_CACHE["time"] = now
     except Exception:
+        if _DASHBOARD_CACHE["data"] is not None:
+            cached = _DASHBOARD_CACHE["data"]
+            return render_template(
+                "index.html",
+                stats=get_stats(),
+                recent_patients=cached["recent_patients"],
+                gender_dist=cached["gender_dist"],
+                common_diseases=cached["common_diseases"],
+            )
         flash("Database service is currently unreachable. Please check connection settings.", "warning")
 
     return render_template("index.html",
