@@ -16,6 +16,8 @@ ENV/
 .env
 .env.*
 .secret_key
+parameter*.txt
+*credential*
 
 # IDE & OS
 .DS_Store

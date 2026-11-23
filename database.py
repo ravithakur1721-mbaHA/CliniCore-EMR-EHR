@@ -54,33 +54,12 @@ def get_db_params():
 def get_connection():
     """
     Establish a secure MySQL database connection.
-    Primary driver: mysql.connector.
-    Fallback driver: pymysql (pure Python, recommended for serverless/Vercel).
+    Primary driver: pymysql (pure-Python, lightweight, zero binary bloat, SSL compliant).
+    Fallback driver: mysql.connector.
     """
     params = get_db_params()
 
-    # Attempt 1: mysql.connector
-    try:
-        import mysql.connector
-        connect_args = {
-            "host": params["host"],
-            "user": params["user"],
-            "password": params["password"],
-            "database": params["database"],
-            "port": params["port"],
-            "autocommit": False,
-        }
-        if "ssl_disabled" in params:
-            connect_args["ssl_disabled"] = params["ssl_disabled"]
-
-        return mysql.connector.connect(**connect_args)
-    except ImportError:
-        pass
-    except Exception as e:
-        # If mysql.connector failed, try pymysql fallback if available
-        pass
-
-    # Attempt 2: pymysql fallback (pure-Python for serverless environments)
+    # Attempt 1: pymysql (lightweight, pure Python, optimal for serverless & cloud SSL)
     try:
         import pymysql
         import pymysql.cursors
@@ -107,28 +86,62 @@ def get_connection():
             def __getattr__(self, name):
                 return getattr(self._conn, name)
 
-        raw = pymysql.connect(
-            host=params["host"],
-            user=params["user"],
-            password=params["password"],
-            database=params["database"],
-            port=params["port"],
-            autocommit=False,
-        )
+        connect_kwargs = {
+            "host": params["host"],
+            "user": params["user"],
+            "password": params["password"],
+            "database": params["database"],
+            "port": params["port"],
+            "autocommit": False,
+            "connect_timeout": 15,
+        }
+        # Enable TLS/SSL for cloud database (e.g. TiDB, Supabase, PlanetScale, Aiven)
+        if params["host"] not in ("localhost", "127.0.0.1") or params.get("ssl_disabled") is False:
+            import ssl
+            connect_kwargs["ssl"] = ssl.create_default_context()
+
+        raw = pymysql.connect(**connect_kwargs)
         return PyMySQLWrapper(raw)
     except ImportError:
         pass
+    except Exception as e:
+        # If pymysql failed, try mysql.connector fallback
+        pass
 
-    # If neither succeeded, raise the primary connector connection attempt
-    import mysql.connector
-    return mysql.connector.connect(
-        host=params["host"],
-        user=params["user"],
-        password=params["password"],
-        database=params["database"],
-        port=params["port"],
-        autocommit=False,
-    )
+    # Attempt 2: mysql.connector fallback
+    try:
+        import mysql.connector
+        connect_args = {
+            "host": params["host"],
+            "user": params["user"],
+            "password": params["password"],
+            "database": params["database"],
+            "port": params["port"],
+            "autocommit": False,
+            "connection_timeout": 15,
+        }
+        if "ssl_disabled" in params:
+            connect_args["ssl_disabled"] = params["ssl_disabled"]
+
+        return mysql.connector.connect(**connect_args)
+    except ImportError:
+        pass
+
+    # If both failed, re-attempt pymysql to bubble the specific connection error
+    import pymysql
+    connect_kwargs = {
+        "host": params["host"],
+        "user": params["user"],
+        "password": params["password"],
+        "database": params["database"],
+        "port": params["port"],
+        "autocommit": False,
+    }
+    if params["host"] not in ("localhost", "127.0.0.1") or params.get("ssl_disabled") is False:
+        import ssl
+        connect_kwargs["ssl"] = ssl.create_default_context()
+    raw = pymysql.connect(**connect_kwargs)
+    return PyMySQLWrapper(raw)
 
 
 def get_table_data(table_name):
