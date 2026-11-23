@@ -1,9 +1,9 @@
-CREATE DATABASE ehrs;
+CREATE DATABASE IF NOT EXISTS ehrs;
 USE ehrs;
 
 -- 🔹 STEP 2: Create Tables (VERY IMPORTANT)
 
-CREATE TABLE patients (
+CREATE TABLE IF NOT EXISTS patients (
     patient_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100),
     age INT,
@@ -13,7 +13,7 @@ CREATE TABLE patients (
 
 -- 🏥 VISITS TABLE
 
-CREATE TABLE visits (
+CREATE TABLE IF NOT EXISTS visits (
     visit_id INT AUTO_INCREMENT PRIMARY KEY,
     patient_id INT,
     visit_date DATE,
@@ -23,7 +23,7 @@ CREATE TABLE visits (
 
 -- 🦠 DIAGNOSES TABLE
 
-CREATE TABLE diagnoses (
+CREATE TABLE IF NOT EXISTS diagnoses (
     diagnosis_id INT AUTO_INCREMENT PRIMARY KEY,
     visit_id INT,
     disease_name VARCHAR(100),
@@ -32,7 +32,7 @@ CREATE TABLE diagnoses (
 
 -- 🧪 LAB RESULTS TABLE
 
-CREATE TABLE lab_results (
+CREATE TABLE IF NOT EXISTS lab_results (
     lab_id INT AUTO_INCREMENT PRIMARY KEY,
     visit_id INT,
     test_name VARCHAR(100),
@@ -42,7 +42,7 @@ CREATE TABLE lab_results (
 
 -- 💊 MEDICATIONS TABLE
 
-CREATE TABLE medications (
+CREATE TABLE IF NOT EXISTS medications (
     med_id INT AUTO_INCREMENT PRIMARY KEY,
     visit_id INT,
     drug_name VARCHAR(100),
@@ -50,8 +50,49 @@ CREATE TABLE medications (
     FOREIGN KEY (visit_id) REFERENCES visits(visit_id)
 );
 
-use ehrs;
-show tables;
+-- 📅 FOLLOW-UPS TABLE
+
+CREATE TABLE IF NOT EXISTS follow_ups (
+    follow_up_id INT AUTO_INCREMENT PRIMARY KEY,
+    patient_id INT,
+    scheduled_date DATE,
+    follow_up_type VARCHAR(100) DEFAULT 'Routine Review',
+    status VARCHAR(50) DEFAULT 'Scheduled',
+    priority VARCHAR(50) DEFAULT 'Normal',
+    notes TEXT,
+    doctor_name VARCHAR(100),
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id)
+);
+
+-- 🧾 BILLING INVOICES TABLE
+
+CREATE TABLE IF NOT EXISTS billing_invoices (
+    invoice_id INT AUTO_INCREMENT PRIMARY KEY,
+    visit_id INT,
+    patient_id INT,
+    invoice_number VARCHAR(50) UNIQUE,
+    invoice_date DATE,
+    consultation_fee DECIMAL(10,2) DEFAULT 500.00,
+    pharmacy_fee DECIMAL(10,2) DEFAULT 0.00,
+    lab_fee DECIMAL(10,2) DEFAULT 0.00,
+    tax_amount DECIMAL(10,2) DEFAULT 25.00,
+    total_amount DECIMAL(10,2) DEFAULT 525.00,
+    payment_status VARCHAR(50) DEFAULT 'Paid',
+    payment_method VARCHAR(50) DEFAULT 'UPI',
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id)
+);
+
+-- 🔐 USERS TABLE (Authentication & RBAC)
+
+CREATE TABLE IF NOT EXISTS users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL,
+    is_active TINYINT(1) DEFAULT 1
+);
+
+-- Sample Data Seeding
 
 INSERT INTO patients (name, age, gender, contact) VALUES
 ('Rahul Kumar', 35, 'Male', '9876543210'),
@@ -113,36 +154,19 @@ INSERT INTO medications (visit_id, drug_name, dosage) VALUES
 (9, 'Omeprazole', '20 mg OD'),
 (10, 'Paracetamol', '650 mg TID');
 
+INSERT INTO follow_ups (patient_id, scheduled_date, follow_up_type, status, priority, notes, doctor_name) VALUES
+(1, '2025-02-10', 'Routine Review', 'Completed', 'Normal', 'Blood pressure stabilized.', 'Dr Sharma'),
+(3, '2025-03-01', 'Lab Review', 'Overdue', 'High', 'Check HbA1c and fasting blood sugar.', 'Dr Gupta'),
+(5, '2025-03-15', 'Cardiology Check', 'Scheduled', 'High', 'Review ECG and lipid panel.', 'Dr Sharma'),
+(8, '2025-03-20', 'Endocrine Check', 'Scheduled', 'Normal', 'Monitor TSH levels and dosage.', 'Dr Rao');
 
-SELECT * FROM patients;
-SELECT * FROM visits;
-SELECT * FROM diagnoses;
-SELECT * FROM lab_results;
-SELECT * FROM medications;
-use ehrs;
+INSERT INTO billing_invoices (visit_id, patient_id, invoice_number, invoice_date, consultation_fee, pharmacy_fee, lab_fee, tax_amount, total_amount, payment_status, payment_method) VALUES
+(1, 1, 'INV-000001', '2025-01-05', 500.00, 150.00, 200.00, 42.50, 892.50, 'Paid', 'UPI'),
+(2, 2, 'INV-000002', '2025-01-07', 500.00, 120.00, 350.00, 48.50, 1018.50, 'Paid', 'Cash'),
+(3, 3, 'INV-000003', '2025-01-10', 500.00, 240.00, 180.00, 46.00, 966.00, 'Paid', 'Card');
 
-SELECT 
-    p.name,
-    v.visit_date,
-    d.disease_name,
-    l.test_name,
-    m.drug_name
-FROM patients p
-JOIN visits v ON p.patient_id = v.patient_id
-JOIN diagnoses d ON v.visit_id = d.visit_id
-JOIN lab_results l ON v.visit_id = l.visit_id
-JOIN medications m ON v.visit_id = m.visit_id;
-
-
-CREATE TABLE users (
-    user_id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    role VARCHAR(20) NOT NULL,
-    is_active TINYINT(1) DEFAULT 1
-);
-
-INSERT INTO users (username, password, role)
-VALUES ('admin', 'admin123', 'Admin'),
-       ('doctor', 'doc123', 'Doctor');
+INSERT INTO users (username, password, role) VALUES
+('admin', 'admin123', 'Admin'),
+('doctor', 'doc123', 'Doctor'),
+('nurse', 'nurse123', 'Nurse');
 
