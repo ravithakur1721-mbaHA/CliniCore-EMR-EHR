@@ -980,3 +980,36 @@ select.form-control { cursor: pointer; }
   color: #6b7280;
   border: 1px solid #d1d5db;
 }
+
+/* ── Watermark & Application Footer ────────────────────────── */
+.app-footer {
+  margin-top: 40px;
+  padding: 18px 0 12px;
+  border-top: 1px solid var(--gray-200);
+  text-align: center;
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.app-footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.footer-separator {
+  color: var(--gray-300);
+}
+
+.footer-watermark {
+  color: var(--gray-600);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.footer-watermark strong {
+  color: var(--primary-700);
+  font-weight: 600;
+}
