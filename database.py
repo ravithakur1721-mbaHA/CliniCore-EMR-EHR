@@ -51,23 +51,37 @@ def get_db_params():
     }
 
 
+_POOL_CONN = None
+
+
 def get_connection():
     """
-    Establish a secure MySQL database connection.
-    Primary driver: pymysql (pure-Python, lightweight, zero binary bloat, SSL compliant).
+    Establish a secure, high-performance MySQL connection.
+    Primary driver: pymysql with serverless persistent connection reuse and TLS encryption.
     Fallback driver: mysql.connector.
     """
+    global _POOL_CONN
+
+    # Reuse persistent warm connection in serverless container if alive
+    if _POOL_CONN is not None:
+        try:
+            _POOL_CONN.ping(reconnect=True)
+            return _POOL_CONN
+        except Exception:
+            _POOL_CONN = None
+
     params = get_db_params()
 
-    # Attempt 1: pymysql (lightweight, pure Python, optimal for serverless & cloud SSL)
+    # Attempt 1: pymysql (lightweight, pure Python, pooled & TLS compliant)
     try:
         import pymysql
         import pymysql.cursors
 
         class PyMySQLWrapper:
-            """Wrapper providing interface parity with mysql.connector for dictionary cursors."""
-            def __init__(self, raw_conn):
+            """Wrapper providing interface parity with mysql.connector and warm socket persistence."""
+            def __init__(self, raw_conn, is_pooled=False):
                 self._conn = raw_conn
+                self._is_pooled = is_pooled
 
             def cursor(self, dictionary=False):
                 if dictionary:
@@ -80,8 +94,16 @@ def get_connection():
             def rollback(self):
                 return self._conn.rollback()
 
+            def ping(self, reconnect=True):
+                return self._conn.ping(reconnect=reconnect)
+
             def close(self):
-                return self._conn.close()
+                # In serverless, keep the underlying TCP/TLS connection alive across requests
+                if not self._is_pooled:
+                    try:
+                        self._conn.close()
+                    except Exception:
+                        pass
 
             def __getattr__(self, name):
                 return getattr(self._conn, name)
@@ -92,8 +114,8 @@ def get_connection():
             "password": params["password"],
             "database": params["database"],
             "port": params["port"],
-            "autocommit": False,
-            "connect_timeout": 15,
+            "autocommit": True,
+            "connect_timeout": 10,
         }
         # Enable TLS/SSL for cloud database (e.g. TiDB, Supabase, PlanetScale, Aiven)
         if params["host"] not in ("localhost", "127.0.0.1") or params.get("ssl_disabled") is False:
@@ -101,11 +123,11 @@ def get_connection():
             connect_kwargs["ssl"] = ssl.create_default_context()
 
         raw = pymysql.connect(**connect_kwargs)
-        return PyMySQLWrapper(raw)
+        _POOL_CONN = PyMySQLWrapper(raw, is_pooled=True)
+        return _POOL_CONN
     except ImportError:
         pass
-    except Exception as e:
-        # If pymysql failed, try mysql.connector fallback
+    except Exception:
         pass
 
     # Attempt 2: mysql.connector fallback
@@ -117,8 +139,8 @@ def get_connection():
             "password": params["password"],
             "database": params["database"],
             "port": params["port"],
-            "autocommit": False,
-            "connection_timeout": 15,
+            "autocommit": True,
+            "connection_timeout": 10,
         }
         if "ssl_disabled" in params:
             connect_args["ssl_disabled"] = params["ssl_disabled"]
@@ -135,13 +157,15 @@ def get_connection():
         "password": params["password"],
         "database": params["database"],
         "port": params["port"],
-        "autocommit": False,
+        "autocommit": True,
+        "connect_timeout": 10,
     }
     if params["host"] not in ("localhost", "127.0.0.1") or params.get("ssl_disabled") is False:
         import ssl
         connect_kwargs["ssl"] = ssl.create_default_context()
     raw = pymysql.connect(**connect_kwargs)
-    return PyMySQLWrapper(raw)
+    _POOL_CONN = PyMySQLWrapper(raw, is_pooled=True)
+    return _POOL_CONN
 
 
 def get_table_data(table_name):

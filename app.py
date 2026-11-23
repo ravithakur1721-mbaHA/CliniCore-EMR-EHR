@@ -114,6 +114,10 @@ app.jinja_env.globals["csrf_token"] = generate_csrf_token
 
 @app.before_request
 def csrf_protect():
+    # Bypass session overhead for static assets
+    if request.path.startswith("/static"):
+        return
+
     session.permanent = True
     # Exempt /login from CSRF abort to prevent lockout during initial cookie negotiation;
     # login is protected by credentials, session rotation (session.clear()), and IP rate limiting.
@@ -150,7 +154,9 @@ def apply_security_headers(response):
         "frame-ancestors 'self';"
     )
     response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
-    if "user" in session:
+    if request.path.startswith("/static"):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    elif "user" in session:
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"
     return response
@@ -267,10 +273,17 @@ def login_required(fn):
 
 
 # ═══════════════════════════════════════════════════════════════
-# DB Helpers & Pagination
+# High-Performance DB Helpers, Multi-Query Optimization & In-Memory Caching
 # ═══════════════════════════════════════════════════════════════
 
+_STATS_CACHE = {"data": None, "time": 0}
+_SIDEBAR_CACHE = {"counts": (0, 0), "time": 0}
+
 def get_stats():
+    now = time.time()
+    if _STATS_CACHE["data"] is not None and (now - _STATS_CACHE["time"] < 15):
+        return _STATS_CACHE["data"]
+
     stats = {
         "patients": 0, "visits": 0, "diagnoses": 0, "labs": 0,
         "meds": 0, "follow_ups": 0, "overdue_follow_ups": 0, "avg_age": "—"
@@ -278,41 +291,53 @@ def get_stats():
     try:
         conn = get_connection()
         cur = conn.cursor(dictionary=True)
-        cur.execute("SELECT COUNT(*) AS c FROM patients");    stats["patients"]  = cur.fetchone()["c"]
-        cur.execute("SELECT COUNT(*) AS c FROM visits");      stats["visits"]    = cur.fetchone()["c"]
-        cur.execute("SELECT COUNT(*) AS c FROM diagnoses");   stats["diagnoses"] = cur.fetchone()["c"]
-        cur.execute("SELECT COUNT(*) AS c FROM lab_results"); stats["labs"]      = cur.fetchone()["c"]
-        cur.execute("SELECT COUNT(*) AS c FROM medications"); stats["meds"]      = cur.fetchone()["c"]
-        cur.execute("SELECT COUNT(*) AS c FROM follow_ups");  stats["follow_ups"] = cur.fetchone()["c"]
-        cur.execute("SELECT COUNT(*) AS c FROM follow_ups WHERE status = 'Overdue'"); stats["overdue_follow_ups"] = cur.fetchone()["c"]
-        cur.execute("SELECT ROUND(AVG(age), 1) AS a FROM patients")
-        row = cur.fetchone(); stats["avg_age"] = row["a"] if row and row["a"] else "—"
+        # Combined single query executes all aggregate metrics in 1 network roundtrip
+        cur.execute("""
+            SELECT 
+                (SELECT COUNT(*) FROM patients) AS patients,
+                (SELECT COUNT(*) FROM visits) AS visits,
+                (SELECT COUNT(*) FROM diagnoses) AS diagnoses,
+                (SELECT COUNT(*) FROM lab_results) AS labs,
+                (SELECT COUNT(*) FROM medications) AS meds,
+                (SELECT COUNT(*) FROM follow_ups) AS follow_ups,
+                (SELECT COUNT(*) FROM follow_ups WHERE status = 'Overdue') AS overdue_follow_ups,
+                (SELECT ROUND(AVG(age), 1) FROM patients) AS avg_age
+        """)
+        row = cur.fetchone()
+        if row:
+            for k in ["patients", "visits", "diagnoses", "labs", "meds", "follow_ups", "overdue_follow_ups"]:
+                stats[k] = row.get(k) or 0
+            stats["avg_age"] = str(row["avg_age"]) if row.get("avg_age") else "—"
         cur.close(); conn.close()
+        _STATS_CACHE["data"] = stats
+        _STATS_CACHE["time"] = now
     except Exception:
-        pass
+        if _STATS_CACHE["data"] is not None:
+            return _STATS_CACHE["data"]
     return stats
 
 
-def get_patient_count():
+def get_sidebar_counts():
+    """Single query to fetch sidebar counts with 20s TTL cache."""
+    now = time.time()
+    if now - _SIDEBAR_CACHE["time"] < 20:
+        return _SIDEBAR_CACHE["counts"]
     try:
         conn = get_connection()
         cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM patients")
-        n = cur.fetchone()[0]; cur.close(); conn.close()
-        return n
+        cur.execute("""
+            SELECT 
+                (SELECT COUNT(*) FROM patients) AS p_cnt,
+                (SELECT COUNT(*) FROM follow_ups WHERE status = 'Overdue') AS ov_cnt
+        """)
+        row = cur.fetchone()
+        counts = (row[0] if row else 0, row[1] if row else 0)
+        _SIDEBAR_CACHE["counts"] = counts
+        _SIDEBAR_CACHE["time"] = now
+        cur.close(); conn.close()
+        return counts
     except Exception:
-        return 0
-
-
-def get_overdue_follow_up_count():
-    try:
-        conn = get_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM follow_ups WHERE status = 'Overdue'")
-        n = cur.fetchone()[0]; cur.close(); conn.close()
-        return n
-    except Exception:
-        return 0
+        return _SIDEBAR_CACHE["counts"]
 
 
 def paginate(total_items, page, per_page=25):
@@ -334,8 +359,9 @@ def inject_globals():
         "can": can,
     }
     if "user" in session:
-        base["patient_count"] = get_patient_count()
-        base["overdue_count"] = get_overdue_follow_up_count()
+        p_count, ov_count = get_sidebar_counts()
+        base["patient_count"] = p_count
+        base["overdue_count"] = ov_count
     else:
         base["patient_count"] = 0
         base["overdue_count"] = 0
@@ -349,7 +375,10 @@ def inject_globals():
 @app.route("/static/<path:filename>")
 def static_files(filename):
     static_dir = os.path.join(app.root_path, "static")
-    return send_from_directory(static_dir, filename)
+    response = send_from_directory(static_dir, filename)
+    # 1 year immutable browser & edge CDN cache
+    response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    return response
 
 
 @app.route("/robots.txt")
