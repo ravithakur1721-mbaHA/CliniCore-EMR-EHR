@@ -22,7 +22,7 @@
 
 <!-- Patient demographics banner -->
 <div class="panel mb-16">
-  <div style="background:var(--navy);border-radius:6px 6px 0 0;padding:14px 18px;display:flex;align-items:center;gap:14px;">
+  <div class="patient-banner">
     <div style="width:48px;height:48px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:700;flex-shrink:0;">
       {{ patient.name[0]|upper }}
     </div>
@@ -41,7 +41,7 @@
   </div>
 
   <!-- Quick stats for this patient -->
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--gray-200);">
+  <div class="patient-stats-grid">
     <div style="padding:12px 18px;border-right:1px solid var(--gray-100);">
       <div style="font-size:10.5px;color:var(--gray-400);text-transform:uppercase;font-weight:600;letter-spacing:.5px;">Visits</div>
       <div style="font-size:22px;font-weight:700;color:var(--gray-900);margin-top:2px;">{{ visits|length }}</div>
