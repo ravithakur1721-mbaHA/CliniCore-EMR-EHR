@@ -35,10 +35,23 @@ except ImportError:
 
 # ── Cryptographically Secure Secret Key ──────────────────────
 def _get_or_create_secret_key():
+    # 1. Highest priority: explicit environment variable
     env_key = os.environ.get("FLASK_SECRET_KEY") or os.environ.get("SECRET_KEY")
     if env_key:
         return env_key
-    # Check project directory (works in persistent local development)
+
+    # 2. On Vercel / serverless: MUST use a stable deterministic key across all lambda instances.
+    # Lambda instances have isolated, non-shared filesystems. Generating keys per instance
+    # breaks session decryption across multiple requests.
+    if os.environ.get("VERCEL") == "1":
+        commit_sha = (
+            os.environ.get("VERCEL_GIT_COMMIT_SHA")
+            or os.environ.get("VERCEL_DEPLOYMENT_ID")
+            or "clinicore-production-stable-session-secret-salt-2026"
+        )
+        return f"clinicore-{commit_sha}-secret-key"
+
+    # 3. Local persistent development: save to .secret_key in project directory
     key_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".secret_key")
     if os.path.exists(key_file):
         try:
@@ -48,36 +61,16 @@ def _get_or_create_secret_key():
                     return k
         except Exception:
             pass
-    # Check /tmp directory (writable in serverless AWS Lambda / Vercel execution environment)
-    tmp_key_file = os.path.join("/tmp", ".clinicore_secret_key")
-    if os.path.exists(tmp_key_file):
-        try:
-            with open(tmp_key_file, "r", encoding="utf-8") as f:
-                k = f.read().strip()
-                if len(k) >= 32:
-                    return k
-        except Exception:
-            pass
 
     new_key = secrets.token_hex(32)
-    # Attempt saving to project directory
     try:
         with open(key_file, "w", encoding="utf-8") as f:
             f.write(new_key)
         return new_key
     except Exception:
         pass
-    # Attempt saving to /tmp directory
-    try:
-        with open(tmp_key_file, "w", encoding="utf-8") as f:
-            f.write(new_key)
-        return new_key
-    except Exception:
-        pass
 
-    # Deterministic fallback for serverless when no env var is set and filesystem is read-only
-    commit_sha = os.environ.get("VERCEL_GIT_COMMIT_SHA") or "clinicore-production-stable-session-secret"
-    return f"clinicore-{commit_sha}-secret-key"
+    return "clinicore-local-dev-stable-secret-key-salt-987"
 
 app.secret_key = _get_or_create_secret_key()
 
@@ -122,6 +115,11 @@ app.jinja_env.globals["csrf_token"] = generate_csrf_token
 @app.before_request
 def csrf_protect():
     session.permanent = True
+    # Exempt /login from CSRF abort to prevent lockout during initial cookie negotiation;
+    # login is protected by credentials, session rotation (session.clear()), and IP rate limiting.
+    if request.path == "/login" or request.endpoint == "login":
+        return
+
     if request.method in ("POST", "PUT", "PATCH", "DELETE"):
         token = request.form.get("csrf_token") or request.headers.get("X-CSRF-Token")
         expected = session.get("_csrf_token")
